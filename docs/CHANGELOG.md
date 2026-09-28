@@ -4,6 +4,10 @@
 
 ### Added
 
+- Shared GameClock Autoload with scaled logical time, pause and strict runtime-state serialization
+- Independent bounded SurvivalState and Player SurvivalComponent driven by elapsed game time
+- Phase 7 survival debug scene and deterministic GameClock/state/component tests
+
 - LootDefinition/LootEntry static data, load-order integration and ItemDefinition reference validation
 - Weighted LootResolver with injected RNG, chance checks, quantity ranges and ItemFactory instances
 - Atomic Container Inventory population with capacity prevalidation and rollback

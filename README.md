@@ -113,6 +113,9 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' --script res://tests/unit/containers/test_container_integration.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/loot/test_loot_registry.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/loot/test_loot_resolution.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/core/test_game_clock.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/survival/test_survival_state.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/survival/test_survival_component.gd
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
@@ -254,9 +257,10 @@ UI and persistence remain deferred.
 Repository initialization, static data, item runtime, player movement,
 interaction, Inventory and WorldItem pickup/drop foundations are implemented.
 Container access, Inventory transfers and the Loot foundation are implemented.
-No Inventory or Container UI, map-based Loot placement or full save/load is implemented.
-Existing engine settings are preserved; the project uses the DataRegistry Autoload
-and the Player Foundation test-world entry scene. See [Data Schema](docs/DATA_SCHEMA.md) and
+The Phase 7 GameClock and Player survival foundations are implemented. No
+Inventory or Container UI, map-based Loot placement or full save/load is implemented.
+Existing engine settings are preserved; the project uses DataRegistry and GameClock
+Autoloads and the Player Foundation test-world entry scene. See [Data Schema](docs/DATA_SCHEMA.md) and
 [Architecture](docs/ARCHITECTURE.md) for the current contract.
 
 Import `game/project.godot` in Godot Project Manager to open the editor.
@@ -266,4 +270,4 @@ The current Godot executables and VS Code shortcut live outside this repository.
 The first-stage empty directories exist locally. Git does not preserve empty
 directories; create them as needed after cloning. No placeholder files are required.
 
-Next phase, specified separately: Phase 7 - Survival Foundation.
+Recommended next phase: Phase 8 - Consumable Foundation.

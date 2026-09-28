@@ -111,6 +111,21 @@ Loot definitions are static data and are not embedded in runtime saves.
 Generated ItemInstances are represented by the existing serialized Inventory
 runtime state; Loot group IDs and roll history are not recorded.
 
+## Phase 7 Runtime Records
+
+The logical clock exposes a strict in-memory record with exactly
+`elapsed_game_seconds` (finite non-negative number), `time_scale` (finite
+non-negative number) and `paused` (boolean). Restoring rejects missing,
+unknown, malformed or out-of-range fields without changing the current clock.
+The pause flag is preserved as runtime clock state.
+
+Each `SurvivalState` exposes exactly `health`, `hunger` and `thirst`, each a
+finite number in `[0.0, 100.0]`. New entities start with full health and zero
+hunger/thirst. Mutation clamps finite values to the range; strict restoration
+rejects out-of-range values and leaves the current state unchanged. The clock
+and survival dictionaries are runtime record contracts only: there is still no
+file I/O, SaveManager, player persistence, or enclosing versioned save format.
+
 ## Requirements
 
 Future saves should:

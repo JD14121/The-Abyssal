@@ -12,7 +12,8 @@ Phase 5 adds a generic Inventory-to-Inventory transfer layer and a world
 Container that owns its own Inventory. Inventory itself remains separate: it
 does not depend on Player, World, Interaction or UI. Phase 6 adds static Loot
 definitions, resolution through injected RNG, and atomic Container Inventory
-population.
+population. Phase 7 adds a shared logical GameClock and per-entity SurvivalState
+advanced by a Player-local SurvivalComponent.
 
 Gameplay Data
 -> Data Registry
@@ -74,6 +75,18 @@ Displays information and receives user interaction.
 ### Persistence
 
 Serializes runtime state into stable save data.
+
+### Game Time and Survival (Phase 7)
+
+`GameClock` is the sole global clock and advances logical game seconds from real
+frame time using a configurable non-negative scale. It can pause and strictly
+serialize/restore its elapsed time, scale and pause flag. It does not emit
+per-frame signals. `SurvivalState` is a plain `RefCounted` value object owned
+per entity; health, hunger and thirst remain bounded from 0 to 100 and serialize
+as primitive fields. The Player's `SurvivalComponent` samples clock elapsed time
+and applies configured hunger/thirst rates per game hour. Rates are development
+placeholders, not balance data. Health does not change automatically, and no
+death, stamina, consumable or UI gameplay system is implied.
 
 ## Important Separation
 

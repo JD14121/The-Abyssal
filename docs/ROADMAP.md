@@ -137,16 +137,27 @@ in Phase 5. Phase 6 — Loot Foundation follows.
 
 ## Phase 7 - Survival
 
-- health
-- hunger
-- thirst
-- stamina
-- food consumption
-- game clock
+- **Complete** — shared logical GameClock with scale, pause and strict runtime-state restoration
+- **Complete** — per-entity SurvivalState for health, hunger and thirst with bounded values and strict serialization
+- **Complete** — Player SurvivalComponent advances hunger and thirst deterministically from game time
+- **Complete** — test-only survival scene and clock/state/component regression coverage
+- Stamina, food consumption and automatic health changes remain deferred to later phases
 
 ---
 
-## Phase 8 - Zombies
+## Phase 8 - Consumable Foundation
+
+- Consumable definitions and item-use validation
+- Food and drink effects applied to SurvivalState
+- Atomic use semantics across Inventory and survival effects
+- Preserve ItemDefinition/ItemInstance separation and deterministic failure handling
+
+This is the recommended next phase to close the first resource-to-survival loop
+before adding creatures.
+
+---
+
+## Phase 9 - Creature and Zombie Foundation
 
 - creature definitions
 - zombie scene
@@ -157,7 +168,7 @@ in Phase 5. Phase 6 — Loot Foundation follows.
 
 ---
 
-## Phase 9 - Combat
+## Phase 10 - Combat Foundation
 
 - melee attack
 - damage
@@ -167,7 +178,7 @@ in Phase 5. Phase 6 — Loot Foundation follows.
 
 ---
 
-## Phase 10 - World
+## Phase 11 - World
 
 - building templates
 - chunks
@@ -176,7 +187,7 @@ in Phase 5. Phase 6 — Loot Foundation follows.
 
 ---
 
-## Phase 11 - Advanced Simulation
+## Phase 12 - Advanced Simulation
 
 Future systems:
 
