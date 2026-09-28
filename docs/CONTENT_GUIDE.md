@@ -103,6 +103,25 @@ Consumable behavior comes from this profile rather than the Item category. The
 current use service consumes one exact Inventory `instance_id`; it does not
 support WorldItems, Container UI, charges or partial use.
 
+## Melee Weapons
+
+1. Define the ordinary Item under `game/data/items/`.
+2. Add a Weapon record under `game/data/weapons/` with a unique `id`, the
+   existing `item_id`, and finite positive `melee_damage`, `melee_range` and
+   `attack_interval` values.
+3. Keep each Item mapped to at most one Weapon. An Item may also map to one
+   Consumable.
+4. Run the Python JSON, ID, reference and content-report tools; the report
+   includes `Weapons: N`.
+5. Run the Weapon Registry and Player melee foundation checks. The
+   `player_melee_test.tscn` debug scene seeds a fresh ItemInstance and equips
+   that exact runtime identity; use Space to attack.
+
+PlayerMeleeComponent owns input timing and target selection. CombatService owns
+damage resolution, and CreatureHealthComponent owns health mutation. Equipment
+slots, condition loss, attack animation, UI, wounds and death are outside this
+foundation.
+
 ## Creature Definitions
 
 To add a Creature definition for the AI and base melee combat layers:

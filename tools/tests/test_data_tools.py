@@ -20,8 +20,10 @@ class DataToolTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.data = Path(self.temp.name) / "data"
         shutil.copytree(FIXTURES / "valid", self.data)
-        self.write("core/load_order.json", {"groups": ["materials", "items", "loot", "consumables"]})
+        self.write("core/load_order.json", {"groups": ["materials", "items", "loot", "consumables", "creatures", "weapons"]})
         self.write("consumables/consumables.json", [])
+        self.write("creatures/creatures.json", [])
+        self.write("weapons/weapons.json", [])
         self.write("loot/loot.json", [{"type": "loot", "id": "loot_test", "rolls": 1,
                                       "entries": [{"item_id": "knife", "weight": 1}]}])
 
@@ -47,6 +49,24 @@ class DataToolTests(unittest.TestCase):
         report = self.run_tool("content_report").stdout
         for expected in ("Materials: 2", "Items: 2", "Loot Groups: 1", "Loot Entries: 1", "misc: 1", "weapon: 1", "Total Definitions: 5"):
             self.assertIn(expected, report)
+
+    def test_weapon_schema_and_item_reference(self):
+        weapon = {"type": "weapon", "id": "knife_weapon", "item_id": "knife",
+                  "melee_damage": 12.0, "melee_range": 48.0, "attack_interval": 0.6}
+        self.write("weapons/weapons.json", [weapon])
+        for tool in TOOLS:
+            with self.subTest(tool=tool):
+                result = self.run_tool(tool)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("Weapons: 1", self.run_tool("content_report").stdout)
+        for field, value in (("melee_damage", 0), ("melee_range", -1), ("attack_interval", "fast")):
+            malformed = dict(weapon, **{field: value})
+            self.write("weapons/weapons.json", [malformed])
+            self.assertNotEqual(self.run_tool("validate_references").returncode, 0)
+        self.write("weapons/weapons.json", [dict(weapon, item_id="missing_item")])
+        self.assertNotEqual(self.run_tool("validate_references").returncode, 0)
+        self.write("weapons/weapons.json", [weapon, dict(weapon, id="another_weapon")])
+        self.assertNotEqual(self.run_tool("validate_references").returncode, 0)
 
     def test_invalid_definitions_fail_with_source_and_reason(self):
         cases = json.loads((FIXTURES / "invalid_cases.json").read_text())

@@ -31,3 +31,8 @@ func set_active_container(container: Variant) -> bool:
 
 func get_damage_receiver() -> DamageReceiver:
 	return get_node_or_null("PlayerDamageReceiver") as DamageReceiver
+
+
+func get_melee_damage() -> float:
+	var melee := get_node_or_null("PlayerMeleeComponent")
+	return melee.get_current_melee_damage() if melee != null else 0.0

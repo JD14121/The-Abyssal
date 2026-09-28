@@ -4,6 +4,9 @@
 
 ### Added
 
+- WeaponDefinition JSON and atomic DataRegistry indexes, static/Python validation, and Weapon reporting
+- PlayerMeleeComponent with exact-instance equip validation, Creature-only target tracking, nearest-target selection, one-press Space input and physics-time cooldown
+- Player melee attacks through the existing CombatService, plus a two-Zombie melee debug scene and integration checks
 - Combat foundation: Creature max health and melee damage, DamageEvent, DamageReceiver adapters, Creature runtime health, CombatService, scene-local CombatCoordinator, Zombie attack resolution, depletion handling, tests and an isolated Combat debug scene
 - CreatureDefinition static schema, Creature Registry lookup, and all-or-nothing load integration
 - Zombie CharacterBody2D scene with distance perception, IDLE/CHASE/ATTACK behavior, NavigationAgent2D and attack-request cadence

@@ -32,8 +32,9 @@ water_bottle_1l
 3. Loot group
 4. Consumable
 5. Creature
+6. Weapon
 
-Consumables were added in Phase 8. Additional types will be added incrementally.
+Consumables were added in Phase 8 and Weapons in Phase 11. Additional types will be added incrementally.
 
 ## Files and Load Order
 
@@ -45,21 +46,21 @@ invalid escapes and malformed numeric tokens, are rejected.
 `game/data/core/load_order.json` contains:
 
 ```json
-{"groups": ["materials", "items", "loot", "consumables", "creatures"]}
+{"groups": ["materials", "items", "loot", "consumables", "creatures", "weapons"]}
 ```
 
 Production manifests list each group exactly once in dependency order. The
-supported production order is `materials`, `items`, `loot`, `consumables`, then
-`creatures`. Previous three- and four-group manifests remain accepted for
-isolated earlier-phase fixtures. Missing, reordered, duplicated or unknown
+supported production order is `materials`, `items`, `loot`, `consumables`,
+`creatures`, then `weapons`. Previous three-, four-, and five-group manifests
+remain accepted for isolated earlier-phase fixtures. Missing, reordered, duplicated or unknown
 groups are fatal. The manifest is configuration, not a gameplay definition, so
 it needs no `type` or `id`.
 
 Items load before Loot and Consumables so their `item_id` references can be
 checked against an existing ItemDefinition. Consumables load after Loot; Loot
 has no Consumable dependency. The loader recursively reads lowercase `.json`
-Creature definitions have no references to earlier data groups. Creature data
-loads last to keep stage order explicit. The loader recursively reads lowercase
+Creature definitions have no references to earlier data groups. Weapon data
+loads last and references existing Items. The loader recursively reads lowercase
 `.json` files in each listed group. Paths are sorted lexically within each group
 and array order is retained.
 Directories must exist and be readable. Directory symbolic links are rejected.
@@ -299,3 +300,23 @@ materials array is also marked read-only; the other public fields are not enforc
 as immutable by the language. Static definitions do not contain instance state,
 behavior or complex weapon/food fields. Phase 0B runtime records are a separate
 contract documented in [SAVE_FORMAT.md](SAVE_FORMAT.md).
+
+## Weapon
+
+WeaponDefinition binds one existing Item to its static melee damage, reach and
+attack interval. It does not store runtime condition or equipment state.
+
+```json
+{
+  "type": "weapon",
+  "id": "weapon_kitchen_knife",
+  "item_id": "kitchen_knife",
+  "melee_damage": 20.0,
+  "melee_range": 52.0,
+  "attack_interval": 0.7
+}
+```
+
+The three numeric values must be finite and greater than zero. Each Item can
+map to at most one Weapon; an Item may also have a Consumable profile. Runtime
+equipment stores the exact Inventory `instance_id`.

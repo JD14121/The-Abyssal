@@ -88,7 +88,8 @@ python -m unittest discover -s tools/tests -v
 
 All tools return 0 on success and 1 for content errors. `--data-root PATH`
 selects another data root containing `core/`, `materials/`, `items/` and `loot/`;
-the production five-group manifest also requires `creatures/`.
+the production six-group manifest also requires `consumables/`, `creatures/`
+and `weapons/`.
 The default root is resolved relative to the tools, independent of the working directory.
 The syntax checker scans all JSON recursively. The other three tools validate
 the complete supported schemas, IDs and references before reporting success.
@@ -125,11 +126,13 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' res://debug/test_scenes/zombie_test.tscn --quit-after 4
 & $godotExecutable --headless --path './game' --script res://tests/unit/combat/test_combat_foundation.gd
 & $godotExecutable --headless --path './game' res://debug/test_scenes/combat_test.tscn --quit-after 4
+& $godotExecutable --headless --path './game' --script res://tests/unit/combat/test_player_melee_foundation.gd
+& $godotExecutable --headless --path './game' res://debug/test_scenes/player_melee_test.tscn --quit-after 4
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
 as well as its exit code. The second starts the real Autoload and the Player
-Foundation test world. Expected output includes `Materials: 5; Items: 10; Loot: 9; Consumables: 2; Creatures: 2`
+Foundation test world. Expected output includes `Materials: 5; Items: 10; Loot: 9; Consumables: 2; Creatures: 2; Weapons: 1`
 and `[PlayerFoundation] Test world ready`. Startup terminates with exit code 1
 if data validation fails. The original data-only scene remains available at
 `res://scenes/bootstrap/data_smoke_test.tscn`.
@@ -282,8 +285,17 @@ Implemented: Creature maximum Health and melee damage, DamageEvent,
 DamageReceiver, Player damage through SurvivalState, CreatureHealthComponent,
 CombatService and a scene-local CombatCoordinator. The separate Combat test
 scene connects Zombie requests to damage resolution. A depleted Zombie stops
-acting but stays in the scene. Player attacks, weapons, armor, wounds, death,
-corpses, UI and persistence remain deferred.
+acting but stays in the scene.
+
+Phase 11: Player Melee and Weapon Foundation (complete)
+
+WeaponDefinition maps existing Items to validated damage, range and interval
+values. PlayerMeleeComponent equips one exact Inventory ItemInstance, tracks
+Creature targets independently of interaction, and resolves Space-triggered
+attacks through CombatService. The `player_melee_test.tscn` scene seeds and
+equips a knife and places two Zombies in the test yard. Health depletion still
+does not create a corpse; armor, wounds, death, UI and persistence remain future
+work.
 
 Phase 0B adds independent item instances, UUID identities, validated condition
 changes and JSON-compatible serialization/reconstruction. Usage and record
@@ -302,8 +314,8 @@ validated Loot groups, injected-RNG resolution into independent ItemInstances,
 and all-or-nothing capacity-aware Container population. Phase 8 adds
 ConsumableDefinition loading and atomic consumption of an exact Inventory item
 instance. Phase 9 adds a generic Creature registry and Zombie AI/navigation
-foundation. Phase 10 adds the first damage resolution pipeline. Map placement,
-UI and persistence remain deferred.
+foundation. Phase 10 adds the first damage resolution pipeline and Phase 11
+adds Player melee. Map placement, UI and persistence remain deferred.
 
 ## Project Status
 
@@ -311,8 +323,8 @@ Repository initialization, static data, item runtime, player movement,
 interaction, Inventory and WorldItem pickup/drop foundations are implemented.
 Container access, Inventory transfers and the Loot foundation are implemented.
 The Phase 7 GameClock and Player survival foundations, Phase 8 Consumable
-Foundation, Phase 9 Creature/Zombie Foundation and Phase 10 Combat Foundation
-are implemented. No
+Foundation, Phase 9 Creature/Zombie Foundation, Phase 10 Combat Foundation and
+Phase 11 Player Melee / Weapon Foundation are implemented. No
 Inventory or Container UI, map-based Loot placement or full save/load is implemented.
 Existing engine settings are preserved; the project uses DataRegistry and GameClock
 Autoloads and the Player Foundation test-world entry scene. See [Data Schema](docs/DATA_SCHEMA.md) and
@@ -325,4 +337,4 @@ The current Godot executables and VS Code shortcut live outside this repository.
 The first-stage empty directories exist locally. Git does not preserve empty
 directories; create them as needed after cloning. No placeholder files are required.
 
-Recommended next phase: Phase 11 - Player Melee and Weapon Foundation.
+Recommended next phase: Phase 12 - Death and Corpse Lifecycle.

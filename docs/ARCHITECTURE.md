@@ -20,6 +20,9 @@ Phase 9 adds generic Creature definitions and a composed Zombie runtime using
 injected targets, distance perception, a compact state machine and Godot
 NavigationAgent2D. Phase 10 adds explicit scene-local Combat resolution from
 that attack intent signal, without adding any Combat singleton.
+Phase 11 adds static Weapon definitions and a PlayerMeleeComponent that keeps
+an exact Inventory instance ID, tracks Creature candidates separately from
+interaction, and sends accepted attacks through the same CombatService.
 
 Gameplay Data
 -> Data Registry
@@ -91,9 +94,27 @@ depend on entity type. Depleting a Creature stops Zombie AI and further attack
 requests but leaves the node in the scene tree. This is not a death/corpse
 system.
 
-AI owns attack timing and range. Combat owns resolution. DamageReceiver owns
-Health mutation. There are no weapons, Player attack input, armor, damage types,
-wounds, infection, knockback, death behavior, UI or persistence in this phase.
+AI owns Zombie attack timing and range. Combat owns resolution. DamageReceiver
+owns Health mutation. At this phase boundary there is no armor, damage types,
+wounds, infection, knockback, death behavior, combat UI or persistence.
+
+### Player Melee and Weapons (Phase 11)
+
+WeaponDefinition maps one Item definition to finite positive damage, range and
+attack interval values. DataRegistry publishes a weapon-by-ID index and a
+separate item-to-weapon index; that mapping remains independent of Consumable
+mapping. PlayerMeleeComponent stores only the equipped ItemInstance identity and
+re-reads that exact instance from Player Inventory for every attack. Removing or
+invalidating it clears the selection; another instance with the same definition
+is never substituted.
+
+An independent Creature-only Area2D tracks candidate bodies. Selection ignores
+depleted or invalid DamageReceivers, chooses the nearest target in weapon range,
+and preserves candidate order for exact-distance ties. Range and receiver are
+checked again before CombatService resolves the request. The component owns
+input and a physics-time cooldown; only a successful CombatService request
+starts it. The Player exposes equipped damage to CombatService without
+mutating health.
 
 ### Data
 

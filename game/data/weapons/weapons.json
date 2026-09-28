@@ -1,0 +1,10 @@
+[
+  {
+    "type": "weapon",
+    "id": "weapon_kitchen_knife",
+    "item_id": "kitchen_knife",
+    "melee_damage": 20.0,
+    "melee_range": 52.0,
+    "attack_interval": 0.7
+  }
+]

@@ -186,14 +186,22 @@ Phase 10 — Combat Foundation follows.
 
 ---
 
-## Phase 11 - Player Melee and Weapon Foundation (Recommended Next)
+## Phase 11 - Player Melee and Weapon Foundation (Complete)
 
-- Player melee input and a minimal attack source
-- weapon runtime reference, reach and cooldown
-- basic weapon damage resolved through CombatService
-- no armor, wounds, infection or ranged combat
+- **Complete** — WeaponDefinition schema, item references, independent registry mapping and Python validation/reporting
+- **Complete** — exact-ItemInstance equip/unequip and Inventory ownership revalidation
+- **Complete** — Creature-only candidate detection, nearest legal target selection and deterministic tie order
+- **Complete** — one-press Space input and physics-time weapon cooldown through CombatService
+- **Complete** — Player melee test scene and runtime regression coverage
+- Armor, wounds, infection and ranged combat remain deferred
 
-## Phase 12 - World
+## Phase 12 - Death and Corpse Lifecycle (Recommended Next)
+
+- Define the transition after Creature health depletion
+- Stop Zombie behavior and represent a persistent in-world corpse runtime entity
+- Keep loot, wounds, infection, persistence and UI scoped to a later explicit phase
+
+## Phase 13 - World
 
 - building templates
 - chunks
@@ -202,7 +210,7 @@ Phase 10 — Combat Foundation follows.
 
 ---
 
-## Phase 13 - Advanced Simulation
+## Phase 14 - Advanced Simulation
 
 Future systems:
 
