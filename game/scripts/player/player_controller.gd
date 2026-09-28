@@ -27,3 +27,7 @@ func set_active_container(container: Variant) -> bool:
 	if access_component == null:
 		return false
 	return access_component.set_active_container(container)
+
+
+func get_damage_receiver() -> DamageReceiver:
+	return get_node_or_null("PlayerDamageReceiver") as DamageReceiver

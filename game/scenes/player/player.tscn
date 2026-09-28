@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/interaction/interaction_component.gd" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/items/world_item.tscn" id="4"]
 [ext_resource type="Script" path="res://scripts/player/container_access_component.gd" id="5"]
 [ext_resource type="Script" path="res://scripts/survival/survival_component.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/combat/player_damage_receiver.gd" id="7"]
 
 [sub_resource type="RectangleShape2D" id="PlayerShape"]
 size = Vector2(32, 32)
@@ -47,3 +48,6 @@ script = ExtResource("5")
 
 [node name="SurvivalComponent" type="Node" parent="."]
 script = ExtResource("6")
+
+[node name="PlayerDamageReceiver" type="Node" parent="."]
+script = ExtResource("7")

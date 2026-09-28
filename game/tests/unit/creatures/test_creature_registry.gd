@@ -44,6 +44,11 @@ func _run() -> void:
 	_prepare_scratch()
 	_write("creatures/invalid.json", "{\"type\":\"creature\",\"id\":\"overflow\",\"name\":\"Overflow\",\"move_speed\":1e999,\"vision_range\":320,\"attack_range\":38,\"attack_interval\":1.2}")
 	check(not registry.load_all_data(scratch) and "move_speed" in "; ".join(registry.get_errors()), "non-finite JSON number is rejected")
+	for field in ["max_health", "melee_damage"]:
+		var overflow_entry := "{\"type\":\"creature\",\"id\":\"overflow_combat\",\"name\":\"Overflow\",\"move_speed\":70,\"vision_range\":320,\"attack_range\":38,\"attack_interval\":1.2,\"max_health\":100,\"melee_damage\":10}"
+		overflow_entry = overflow_entry.replace("\"%s\":%s" % [field, "100" if field == "max_health" else "10"], "\"%s\":1e999" % field)
+		_write("creatures/invalid.json", overflow_entry)
+		check(not registry.load_all_data(scratch) and field in "; ".join(registry.get_errors()), "non-finite %s is rejected" % field)
 	check(registry.load_all_data(VALID_ROOT) and registry.has_creature(&"zombie_basic"), "valid reload recovers Creature Registry")
 	registry.free()
 	_remove_tree(scratch)

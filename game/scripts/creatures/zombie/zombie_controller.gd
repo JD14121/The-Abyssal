@@ -35,6 +35,11 @@ func initialize_runtime(registry_override: Node = null) -> bool:
 	creature_definition = registry.get_creature(definition_id)
 	if creature_definition == null:
 		return _fail_initialization("Creature definition %s is unavailable" % definition_id)
+	var health_component := get_node_or_null("CreatureHealthComponent") as CreatureHealthComponent
+	if health_component == null or not health_component.configure(creature_definition):
+		return _fail_initialization("CreatureHealthComponent is missing or could not initialize")
+	if not health_component.health_depleted.is_connected(_on_health_depleted):
+		health_component.health_depleted.connect(_on_health_depleted)
 	initialized = true
 	set_physics_process(true)
 	return true
@@ -54,11 +59,22 @@ func get_target_distance() -> float:
 	return global_position.distance_to(target.global_position)
 
 
+func get_damage_receiver() -> DamageReceiver:
+	return get_node_or_null("CreatureHealthComponent") as DamageReceiver
+
+
+func get_melee_damage() -> float:
+	return creature_definition.melee_damage if creature_definition != null else 0.0
+
+
 func _physics_process(delta: float) -> void:
 	physics_step(delta)
 
 
 func physics_step(delta: float) -> void:
+	if get_damage_receiver() != null and get_damage_receiver().is_depleted():
+		_on_health_depleted()
+		return
 	if not initialized or creature_definition == null:
 		velocity = Vector2.ZERO
 		return
@@ -126,3 +142,11 @@ func _fail_initialization(reason: String) -> bool:
 	set_physics_process(false)
 	push_error("[ZombieController] %s: %s" % [get_path() if is_inside_tree() else name, reason])
 	return false
+
+
+func _on_health_depleted() -> void:
+	initialized = false
+	target = null
+	current_state = State.IDLE
+	velocity = Vector2.ZERO
+	set_physics_process(false)

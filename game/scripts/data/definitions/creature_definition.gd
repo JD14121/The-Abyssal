@@ -8,6 +8,8 @@ var move_speed: float
 var vision_range: float
 var attack_range: float
 var attack_interval: float
+var max_health: float
+var melee_damage: float
 var source_file: String
 
 
@@ -18,4 +20,6 @@ func _init(data: Dictionary, source: String) -> void:
 	vision_range = float(data.vision_range)
 	attack_range = float(data.attack_range)
 	attack_interval = float(data.attack_interval)
+	max_health = float(data.max_health)
+	melee_damage = float(data.melee_damage)
 	source_file = source

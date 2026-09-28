@@ -18,8 +18,8 @@ profiles and a service that atomically coordinates Inventory item use with
 SurvivalState effects.
 Phase 9 adds generic Creature definitions and a composed Zombie runtime using
 injected targets, distance perception, a compact state machine and Godot
-NavigationAgent2D. Its attack signal stops at an intent request; combat remains
-separate and unimplemented.
+NavigationAgent2D. Phase 10 adds explicit scene-local Combat resolution from
+that attack intent signal, without adding any Combat singleton.
 
 Gameplay Data
 -> Data Registry
@@ -37,7 +37,12 @@ Creature JSON
 -> IDLE / CHASE / ATTACK
 -> NavigationAgent2D
 -> attack_requested
--> [future Combat System]
+-> CombatCoordinator
+-> CombatService
+-> DamageEvent
+-> DamageReceiver
+   -> PlayerDamageReceiver -> SurvivalState.health
+   -> CreatureHealthComponent -> Creature runtime health
 
 ## Main Layers
 
@@ -64,9 +69,31 @@ or accesses SurvivalState; the signal records AI intent only.
 
 Known limits: walls do not block perception; there is no vision cone, target
 memory, hearing, noise, wander/search/investigate state, Zombie separation,
-horde behavior, spawning, population simulation, off-screen simulation, health,
-damage, death, bites, scratches, wounds, infection, loot, animation, sound or
-persistence. Phase 10 owns combat resolution and damage.
+horde behavior, spawning, population simulation, off-screen simulation, bites,
+scratches, wounds, infection, loot, animation, sound or persistence. Health and
+base melee parameters are now defined by Phase 10 below.
+
+### Combat (Phase 10)
+
+Creature definitions provide finite positive `max_health` and `melee_damage`.
+ZombieController decides when it emits `attack_requested(attacker, target)`;
+it never reads or changes Health. A scene that wants requests resolved connects
+the signal to its local CombatCoordinator. Without that connection, attack
+requests have no gameplay side effect.
+
+CombatCoordinator forwards the request to CombatService. CombatService checks
+the attacker, target, positive finite damage and target receiver before asking
+the DamageReceiver to apply a DamageEvent. The receiver owns the Health mutation:
+PlayerDamageReceiver delegates to the Player's existing SurvivalState, while
+CreatureHealthComponent stores one Creature's current Health and maximum. The
+two receiver implementations share one contract and CombatService does not
+depend on entity type. Depleting a Creature stops Zombie AI and further attack
+requests but leaves the node in the scene tree. This is not a death/corpse
+system.
+
+AI owns attack timing and range. Combat owns resolution. DamageReceiver owns
+Health mutation. There are no weapons, Player attack input, armor, damage types,
+wounds, infection, knockback, death behavior, UI or persistence in this phase.
 
 ### Data
 

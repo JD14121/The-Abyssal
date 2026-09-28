@@ -23,7 +23,7 @@ TYPE_FIELDS = {
     "item": {"category", "mass", "materials"},
     "loot": {"rolls", "entries"},
     "consumable": {"item_id", "hunger_delta", "thirst_delta"},
-    "creature": {"move_speed", "vision_range", "attack_range", "attack_interval"},
+    "creature": {"move_speed", "vision_range", "attack_range", "attack_interval", "max_health", "melee_damage"},
 }
 
 
@@ -116,7 +116,7 @@ def validate_entry(entry, expected_type: str, source: str, result: ContentResult
                 elif material_id not in result.definitions["material"]:
                     error("materials", f"unknown material ID {material_id}")
     elif expected_type == "creature":
-        for field_name in ("move_speed", "vision_range", "attack_range", "attack_interval"):
+        for field_name in ("move_speed", "vision_range", "attack_range", "attack_interval", "max_health", "melee_damage"):
             value = entry.get(field_name)
             if field_name not in entry:
                 error(field_name, "missing required field")

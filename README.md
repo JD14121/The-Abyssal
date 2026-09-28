@@ -123,6 +123,8 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' --script res://tests/unit/creatures/test_creature_registry.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/creatures/test_zombie_foundation.gd
 & $godotExecutable --headless --path './game' res://debug/test_scenes/zombie_test.tscn --quit-after 4
+& $godotExecutable --headless --path './game' --script res://tests/unit/combat/test_combat_foundation.gd
+& $godotExecutable --headless --path './game' res://debug/test_scenes/combat_test.tscn --quit-after 4
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
@@ -229,6 +231,21 @@ verify a non-consumable is rejected; WASD movement remains available. The debug
 text shows needs, held instance IDs and the last use result. This scene does not
 add a formal use input, Inventory UI or Survival HUD.
 
+## Run and Check Combat Foundation
+
+Open `game/debug/test_scenes/combat_test.tscn` and run it with F6, or use:
+
+```powershell
+& $godotExecutable --path './game' res://debug/test_scenes/combat_test.tscn
+```
+
+Move the Player with WASD or the arrow keys. The test-only status label shows
+Player and Zombie Health, Zombie state and attack requests. When the Zombie
+reaches attack range, each AI request reduces Player Health by the displayed
+melee damage at the configured attack interval. Press **H** to apply 25 test
+damage to the Zombie. This scene explicitly connects CombatCoordinator;
+`zombie_test.tscn` remains AI-only and has no damage resolution.
+
 ## Development Rules
 
 Read `AGENTS.md` before making significant changes.
@@ -257,7 +274,16 @@ Phase 9: Creature / Zombie Foundation (complete)
 Implemented: shared CreatureDefinition loading and validation, a data-bound
 ZombieController with distance-based IDLE/CHASE/ATTACK states, NavigationAgent2D
 movement and an attack-request signal. The debug yard includes a navigable
-obstacle; attack requests do not resolve damage or change Player health.
+obstacle; this AI-only scene has no CombatCoordinator and does not resolve damage.
+
+Phase 10: Combat Foundation (complete)
+
+Implemented: Creature maximum Health and melee damage, DamageEvent,
+DamageReceiver, Player damage through SurvivalState, CreatureHealthComponent,
+CombatService and a scene-local CombatCoordinator. The separate Combat test
+scene connects Zombie requests to damage resolution. A depleted Zombie stops
+acting but stays in the scene. Player attacks, weapons, armor, wounds, death,
+corpses, UI and persistence remain deferred.
 
 Phase 0B adds independent item instances, UUID identities, validated condition
 changes and JSON-compatible serialization/reconstruction. Usage and record
@@ -276,7 +302,8 @@ validated Loot groups, injected-RNG resolution into independent ItemInstances,
 and all-or-nothing capacity-aware Container population. Phase 8 adds
 ConsumableDefinition loading and atomic consumption of an exact Inventory item
 instance. Phase 9 adds a generic Creature registry and Zombie AI/navigation
-foundation. Map placement, combat resolution, UI and persistence remain deferred.
+foundation. Phase 10 adds the first damage resolution pipeline. Map placement,
+UI and persistence remain deferred.
 
 ## Project Status
 
@@ -284,7 +311,8 @@ Repository initialization, static data, item runtime, player movement,
 interaction, Inventory and WorldItem pickup/drop foundations are implemented.
 Container access, Inventory transfers and the Loot foundation are implemented.
 The Phase 7 GameClock and Player survival foundations, Phase 8 Consumable
-Foundation, and Phase 9 Creature/Zombie Foundation are implemented. No
+Foundation, Phase 9 Creature/Zombie Foundation and Phase 10 Combat Foundation
+are implemented. No
 Inventory or Container UI, map-based Loot placement or full save/load is implemented.
 Existing engine settings are preserved; the project uses DataRegistry and GameClock
 Autoloads and the Player Foundation test-world entry scene. See [Data Schema](docs/DATA_SCHEMA.md) and
@@ -297,4 +325,4 @@ The current Godot executables and VS Code shortcut live outside this repository.
 The first-stage empty directories exist locally. Git does not preserve empty
 directories; create them as needed after cloning. No placeholder files are required.
 
-Recommended next phase: Phase 10 - Combat Foundation.
+Recommended next phase: Phase 11 - Player Melee and Weapon Foundation.

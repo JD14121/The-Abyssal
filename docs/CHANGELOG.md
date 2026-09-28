@@ -4,6 +4,7 @@
 
 ### Added
 
+- Combat foundation: Creature max health and melee damage, DamageEvent, DamageReceiver adapters, Creature runtime health, CombatService, scene-local CombatCoordinator, Zombie attack resolution, depletion handling, tests and an isolated Combat debug scene
 - CreatureDefinition static schema, Creature Registry lookup, and all-or-nothing load integration
 - Zombie CharacterBody2D scene with distance perception, IDLE/CHASE/ATTACK behavior, NavigationAgent2D and attack-request cadence
 - Creature Python validation/report support, invalid fixtures, runtime/navigation tests and Zombie debug yard

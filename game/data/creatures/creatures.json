@@ -6,7 +6,9 @@
     "move_speed": 70.0,
     "vision_range": 320.0,
     "attack_range": 38.0,
-    "attack_interval": 1.2
+    "attack_interval": 1.2,
+    "max_health": 100.0,
+    "melee_damage": 10.0
   },
   {
     "type": "creature",
@@ -15,6 +17,8 @@
     "move_speed": 45.0,
     "vision_range": 320.0,
     "attack_range": 38.0,
-    "attack_interval": 1.6
+    "attack_interval": 1.6,
+    "max_health": 100.0,
+    "melee_damage": 7.0
   }
 ]

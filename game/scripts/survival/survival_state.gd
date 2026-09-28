@@ -30,6 +30,12 @@ func set_health(value: float) -> bool:
 	return true
 
 
+func modify_health(delta: float) -> bool:
+	if not _is_finite(delta):
+		return false
+	return set_health(_health + delta)
+
+
 func set_hunger(value: float) -> bool:
 	if not _is_finite(value):
 		return false

@@ -175,15 +175,25 @@ Phase 10 — Combat Foundation follows.
 
 ## Phase 10 - Combat Foundation
 
-- melee attack
-- damage
-- knockback
-- death
-- simple weapon durability
+- **Complete** — finite positive Creature `max_health` and `melee_damage` schema fields
+- **Complete** — DamageEvent and shared DamageReceiver contract
+- **Complete** — Player damage adapter backed only by SurvivalState health
+- **Complete** — CreatureHealthComponent, clamped damage and one-time depletion signal
+- **Complete** — CombatService and scene-local CombatCoordinator
+- **Complete** — Zombie attack requests resolve once per AI cooldown in the Combat test scene
+- **Complete** — depleted Zombie AI stops while the node remains in the scene tree
+- Weapons, armor, wounds, death, corpses, UI and persistence remain deferred
 
 ---
 
-## Phase 11 - World
+## Phase 11 - Player Melee and Weapon Foundation (Recommended Next)
+
+- Player melee input and a minimal attack source
+- weapon runtime reference, reach and cooldown
+- basic weapon damage resolved through CombatService
+- no armor, wounds, infection or ranged combat
+
+## Phase 12 - World
 
 - building templates
 - chunks
@@ -192,7 +202,7 @@ Phase 10 — Combat Foundation follows.
 
 ---
 
-## Phase 12 - Advanced Simulation
+## Phase 13 - Advanced Simulation
 
 Future systems:
 

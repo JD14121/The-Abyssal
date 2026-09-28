@@ -105,18 +105,23 @@ support WorldItems, Container UI, charges or partial use.
 
 ## Creature Definitions
 
-To add a Creature definition for the AI/movement layer:
+To add a Creature definition for the AI and base melee combat layers:
 
 1. Choose a stable lowercase `id` and non-empty `name`.
 2. Add a record under `game/data/creatures/` with `move_speed`, `vision_range`,
-   `attack_range` and `attack_interval`.
+   `attack_range`, `attack_interval`, `max_health` and `melee_damage`.
 3. Use finite positive values and keep `attack_range <= vision_range`.
 4. Run the JSON, ID, reference and content-report tools; the report includes
    `Creatures: N`.
 5. Set the matching `definition_id` on a Zombie scene/controller and exercise
    it in `res://debug/test_scenes/zombie_test.tscn`.
+6. To exercise resolved attacks, use `res://debug/test_scenes/combat_test.tscn`,
+   where the scene-local CombatCoordinator is explicitly connected.
 
-Creature parameters describe shared static data. ZombieController owns runtime
-targeting and state. Perception uses distance only, so walls do not block
-detection. Creature data does not yet contain Health, damage, armor, hearing,
-loot or persistence.
+Creature parameters describe shared static data. `attack_interval` controls
+when ZombieController requests attacks; `melee_damage` is applied by Combat
+only after a request reaches a scene-local CombatCoordinator. ZombieController
+owns runtime targeting and state and never changes Health. Perception uses
+distance only, so walls do not block detection. Creature runtime Health belongs
+to CreatureHealthComponent. Armor, damage types, death, hearing, loot and
+persistence are not implemented.

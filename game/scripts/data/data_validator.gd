@@ -8,7 +8,7 @@ const ITEM_FIELDS := ["category", "mass", "materials"]
 const LOOT_FIELDS := ["rolls", "entries"]
 const LOOT_ENTRY_FIELDS := ["item_id", "weight", "chance", "min_quantity", "max_quantity"]
 const CONSUMABLE_FIELDS := ["item_id", "hunger_delta", "thirst_delta"]
-const CREATURE_FIELDS := ["move_speed", "vision_range", "attack_range", "attack_interval"]
+const CREATURE_FIELDS := ["move_speed", "vision_range", "attack_range", "attack_interval", "max_health", "melee_damage"]
 
 var errors: Array[String] = []
 var warnings: Array[String] = []

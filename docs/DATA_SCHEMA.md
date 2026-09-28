@@ -228,8 +228,9 @@ each Item may map to at most one Consumable.
 
 ## Creature
 
-Creature definitions hold shared AI and movement parameters. The first version
-supports a Zombie controller and requires all fields below:
+Creature definitions hold shared AI, movement and base melee combat parameters.
+The current version supports the Zombie controller and requires all fields
+below:
 
 ```json
 {
@@ -239,16 +240,20 @@ supports a Zombie controller and requires all fields below:
   "move_speed": 70.0,
   "vision_range": 320.0,
   "attack_range": 38.0,
-  "attack_interval": 1.2
+  "attack_interval": 1.2,
+  "max_health": 100.0,
+  "melee_damage": 10.0
 }
 ```
 
 `move_speed` is world pixels per real gameplay second. `vision_range` and
 `attack_range` are world-space pixels. `attack_interval` is real gameplay
-seconds and is unaffected by GameClock time scale. Each numeric field must be
-finite and greater than zero; `attack_range` must not exceed `vision_range`.
-Creature IDs are unique within the Creature type. No Health, damage, armor,
-hearing, loot or persistence fields belong to this first version.
+seconds and is unaffected by GameClock time scale. `max_health` is the runtime
+Creature's starting and maximum Health. `melee_damage` is the base damage
+requested for each resolved melee attack. Every numeric field must be finite
+and greater than zero; `attack_range` must not exceed `vision_range`. Creature
+IDs are unique within the Creature type. Armor, damage types, hearing, loot and
+Creature persistence are not part of this schema.
 
 Invalid references must produce validation errors.
 
@@ -266,6 +271,7 @@ The implemented pipeline detects:
 - negative or non-finite density/mass
 - non-finite Consumable effects
 - non-finite or non-positive Creature movement/perception/cadence values
+- non-finite or non-positive Creature `max_health` and `melee_damage`
 - Creature attack range larger than its vision range
 - invalid load-order configuration or unreadable data paths
 
