@@ -5,9 +5,11 @@ const Loader = preload("res://scripts/data/data_loader.gd")
 const Validator = preload("res://scripts/data/data_validator.gd")
 const MaterialData = preload("res://scripts/data/definitions/material_definition.gd")
 const Item = preload("res://scripts/data/definitions/item_definition.gd")
+const Loot = preload("res://scripts/data/definitions/loot_definition.gd")
 
 var _materials: Dictionary[StringName, MaterialData] = {}
 var _items: Dictionary[StringName, Item] = {}
+var _loot: Dictionary[StringName, Loot] = {}
 var _loaded: bool = false
 var _errors: Array[String] = []
 var _warnings: Array[String] = []
@@ -22,6 +24,7 @@ func load_all_data(data_root: String = "res://data") -> bool:
 	_loaded = false
 	_materials.clear()
 	_items.clear()
+	_loot.clear()
 	_errors.clear()
 	_warnings.clear()
 	var started := Time.get_ticks_msec()
@@ -29,6 +32,7 @@ func load_all_data(data_root: String = "res://data") -> bool:
 	var validator := Validator.new()
 	var pending_materials: Dictionary[StringName, MaterialData] = {}
 	var pending_items: Dictionary[StringName, Item] = {}
+	var pending_loot: Dictionary[StringName, Loot] = {}
 	print("[DataRegistry] Starting data load: " + data_root)
 	var order_path := data_root.path_join("core/load_order.json")
 	var order: Dictionary = loader.read_json(order_path)
@@ -43,15 +47,30 @@ func load_all_data(data_root: String = "res://data") -> bool:
 				var entries: Array = validator.entries(parsed.value, path)
 				for index in range(entries.size()):
 					var entry: Variant = entries[index]
-					var registered: Dictionary = pending_materials if group == "materials" else pending_items
-					if not validator.validate(entry, Validator.GROUP_TYPES[group], "%s[%d]" % [path, index], registered, pending_materials):
+					var registered: Dictionary
+					var references: Dictionary
+					match group:
+						"materials":
+							registered = pending_materials
+							references = pending_materials
+						"items":
+							registered = pending_items
+							references = pending_materials
+						"loot":
+							registered = pending_loot
+							references = pending_items
+					if not validator.validate(entry, Validator.GROUP_TYPES[group], "%s[%d]" % [path, index], registered, references):
 						continue
-					if group == "materials":
-						var definition := MaterialData.new(entry, path)
-						pending_materials[definition.id] = definition
-					else:
-						var definition := Item.new(entry, path)
-						pending_items[definition.id] = definition
+					match group:
+						"materials":
+							var material := MaterialData.new(entry, path)
+							pending_materials[material.id] = material
+						"items":
+							var item := Item.new(entry, path)
+							pending_items[item.id] = item
+						"loot":
+							var loot := Loot.new(entry, path)
+							pending_loot[loot.id] = loot
 	_errors.append_array(loader.errors)
 	_errors.append_array(validator.errors)
 	_warnings.append_array(validator.warnings)
@@ -64,8 +83,9 @@ func load_all_data(data_root: String = "res://data") -> bool:
 		return false
 	_materials = pending_materials
 	_items = pending_items
+	_loot = pending_loot
 	_loaded = true
-	print("[DataRegistry] Ready. Materials: %d; Items: %d; Files: %d; Errors: 0; Warnings: %d; Duration: %d ms" % [_materials.size(), _items.size(), loader.file_count, _warnings.size(), Time.get_ticks_msec() - started])
+	print("[DataRegistry] Ready. Materials: %d; Items: %d; Loot: %d; Files: %d; Errors: 0; Warnings: %d; Duration: %d ms" % [_materials.size(), _items.size(), _loot.size(), loader.file_count, _warnings.size(), Time.get_ticks_msec() - started])
 	return true
 
 
@@ -89,12 +109,24 @@ func has_item(id: StringName) -> bool:
 	return _items.has(id)
 
 
+func get_loot(id: StringName) -> Loot:
+	return _loot.get(id)
+
+
+func has_loot(id: StringName) -> bool:
+	return _loot.has(id)
+
+
 func get_all_materials() -> Array:
 	return _materials.values()
 
 
 func get_all_items() -> Array:
 	return _items.values()
+
+
+func get_all_loot() -> Array:
+	return _loot.values()
 
 
 func get_errors() -> Array[String]:

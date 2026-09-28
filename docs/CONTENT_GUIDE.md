@@ -68,3 +68,19 @@ Subdirectories are supported. Follow the required fields and defaults in
 [README.md](../README.md). Start the Godot data verification scene to confirm the
 runtime path as well. Unknown fields warn; invalid fields, IDs and references fail
 the whole load. Keep intentionally invalid examples in test fixtures.
+
+## Loot Groups
+
+Add a Loot definition or array under `game/data/loot/`. Choose a stable
+`loot_...` ID, set a nonnegative integer-valued `rolls` count, and reference
+existing item IDs in `entries`. Each entry needs a positive relative `weight`;
+optional `chance` defaults to `1.0`, `min_quantity` defaults to `1`, and
+`max_quantity` defaults to the minimum. Keep Loot weight separate from the
+referenced item's mass. An empty entries array is valid and resolves to no items.
+
+Run the Python JSON, ID, reference and content-report commands from the
+repository root, then run the Godot Loot registry and resolver tests. Runtime
+selection uses the caller's injected RandomNumberGenerator; fixed seeds make
+tests repeatable. The resolver returns fresh ItemInstances, and callers can use
+ContainerLootPopulator to add all of them atomically to an Inventory. Loot
+profiles are not bound to every Container automatically.

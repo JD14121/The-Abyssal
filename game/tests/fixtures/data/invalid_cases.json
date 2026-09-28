@@ -17,5 +17,18 @@
   {"name": "unknown_type", "group": "items", "entries": [{"type": "creature", "id": "bad", "name": "Bad"}], "diagnostic": "type"},
   {"name": "wrong_group", "group": "items", "entries": [{"type": "material", "id": "bad", "name": "Bad"}], "diagnostic": "type"},
   {"name": "non_object", "group": "items", "entries": [42], "diagnostic": "object"},
-  {"name": "null_root", "group": "items", "entries": null, "diagnostic": "root"}
+  {"name": "null_root", "group": "items", "entries": null, "diagnostic": "root"},
+  {"name": "duplicate_loot", "group": "loot", "entries": [{"type": "loot", "id": "loot_test", "rolls": 1, "entries": []}], "diagnostic": "duplicate"},
+  {"name": "invalid_loot_id", "group": "loot", "entries": [{"type": "loot", "id": "Loot-Bad", "rolls": 1, "entries": []}], "diagnostic": "id"},
+  {"name": "unknown_loot_item", "group": "loot", "entries": [{"type": "loot", "id": "bad_reference", "rolls": 1, "entries": [{"item_id": "missing_item", "weight": 1}]}], "diagnostic": "missing_item"},
+  {"name": "zero_loot_weight", "group": "loot", "entries": [{"type": "loot", "id": "bad_weight", "rolls": 1, "entries": [{"item_id": "knife", "weight": 0}]}], "diagnostic": "weight"},
+  {"name": "negative_loot_weight", "group": "loot", "entries": [{"type": "loot", "id": "bad_weight", "rolls": 1, "entries": [{"item_id": "knife", "weight": -1}]}], "diagnostic": "weight"},
+  {"name": "invalid_loot_chance", "group": "loot", "entries": [{"type": "loot", "id": "bad_chance", "rolls": 1, "entries": [{"item_id": "knife", "weight": 1, "chance": 1.1}]}], "diagnostic": "chance"},
+  {"name": "invalid_loot_quantity", "group": "loot", "entries": [{"type": "loot", "id": "bad_quantity", "rolls": 1, "entries": [{"item_id": "knife", "weight": 1, "min_quantity": 2, "max_quantity": 1}]}], "diagnostic": "max_quantity"},
+  {"name": "missing_loot_entries", "group": "loot", "entries": [{"type": "loot", "id": "bad_entries", "rolls": 1}], "diagnostic": "entries"},
+  {"name": "negative_loot_rolls", "group": "loot", "entries": [{"type": "loot", "id": "bad_rolls", "rolls": -1, "entries": []}], "diagnostic": "rolls"},
+  {"name": "fractional_loot_rolls", "group": "loot", "entries": [{"type": "loot", "id": "bad_rolls", "rolls": 1.5, "entries": []}], "diagnostic": "rolls"},
+  {"name": "wrong_loot_entries_type", "group": "loot", "entries": [{"type": "loot", "id": "bad_entries", "rolls": 1, "entries": "knife"}], "diagnostic": "entries"},
+  {"name": "negative_loot_quantity", "group": "loot", "entries": [{"type": "loot", "id": "bad_quantity", "rolls": 1, "entries": [{"item_id": "knife", "weight": 1, "min_quantity": -1}]}], "diagnostic": "min_quantity"},
+  {"name": "negative_loot_chance", "group": "loot", "entries": [{"type": "loot", "id": "bad_chance", "rolls": 1, "entries": [{"item_id": "knife", "weight": 1, "chance": -0.1}]}], "diagnostic": "chance"}
 ]

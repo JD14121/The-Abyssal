@@ -120,15 +120,18 @@ stacking, item use, and world persistence remained deferred. Phase 5 follows.
 - Player ↔ Container transfers and test-only debug scene controls
 - transfer invariant, rollback, Container and real interaction integration tests
 
-No Loot, random contents, UI, stacking, batch transfer or persistence is included.
-Recommended next: Phase 6 - Loot Foundation.
+No Loot, random contents, UI, stacking, batch transfer or persistence was included
+in Phase 5. Phase 6 — Loot Foundation follows.
 
 ---
 
 ## Phase 6 - Loot Foundation
 
-- loot definitions and validated references
-- container/location loot generation
+- **Complete** — Loot definitions, entries, registry lookup and ItemDefinition reference validation
+- **Complete** — weighted selection, per-entry chance, quantity ranges and injected deterministic RNG
+- **Complete** — ItemFactory-backed runtime item creation and atomic capacity-aware Inventory population
+- **Complete** — Python validators, content reporting, regression coverage and documentation
+- Map/building/room placement, respawn and search interactions remain future work
 
 ---
 

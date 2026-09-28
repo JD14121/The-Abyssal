@@ -1,4 +1,4 @@
-"""Validate IDs, schemas and references for material/item definitions."""
+"""Validate IDs, schemas and references for material, item and loot definitions."""
 
 from data_utils import run_cli
 

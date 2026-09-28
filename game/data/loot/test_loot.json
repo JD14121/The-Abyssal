@@ -1,0 +1,36 @@
+[
+  {
+    "type": "loot",
+    "id": "loot_test_kitchen",
+    "rolls": 3,
+    "entries": [
+      {"item_id": "canned_beans", "weight": 10, "chance": 1.0, "min_quantity": 2, "max_quantity": 2},
+      {"item_id": "water_bottle", "weight": 6, "chance": 0.75, "min_quantity": 1, "max_quantity": 2},
+      {"item_id": "glass_bottle", "weight": 2, "chance": 0.5, "min_quantity": 1, "max_quantity": 1}
+    ]
+  },
+  {
+    "type": "loot",
+    "id": "loot_test_medical",
+    "rolls": 2,
+    "entries": [
+      {"item_id": "clean_bandage", "weight": 10, "chance": 1.0, "min_quantity": 1, "max_quantity": 3},
+      {"item_id": "water_bottle", "weight": 1, "chance": 0.25, "min_quantity": 1, "max_quantity": 1}
+    ]
+  },
+  {
+    "type": "loot",
+    "id": "loot_test_tools",
+    "rolls": 2,
+    "entries": [
+      {"item_id": "hammer", "weight": 5, "chance": 0.7, "min_quantity": 1, "max_quantity": 1},
+      {"item_id": "flashlight", "weight": 2, "chance": 0.8, "min_quantity": 1, "max_quantity": 1}
+    ]
+  },
+  {"type": "loot", "id": "loot_test_empty", "rolls": 0, "entries": []},
+  {"type": "loot", "id": "loot_test_fixed", "rolls": 3, "entries": [{"item_id": "canned_beans", "weight": 1, "min_quantity": 2, "max_quantity": 2}]},
+  {"type": "loot", "id": "loot_test_zero_rolls", "rolls": 0, "entries": [{"item_id": "canned_beans", "weight": 1}]},
+  {"type": "loot", "id": "loot_test_chance_zero", "rolls": 1, "entries": [{"item_id": "canned_beans", "weight": 1, "chance": 0}]},
+  {"type": "loot", "id": "loot_test_chance_one", "rolls": 1, "entries": [{"item_id": "canned_beans", "weight": 1, "chance": 1}]},
+  {"type": "loot", "id": "loot_test_weighted", "rolls": 10000, "entries": [{"item_id": "canned_beans", "weight": 9}, {"item_id": "glass_bottle", "weight": 1}]}
+]

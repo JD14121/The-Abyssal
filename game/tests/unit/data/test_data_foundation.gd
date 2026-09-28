@@ -30,6 +30,7 @@ func _run() -> void:
 	check(registry.is_loaded(), "successful load becomes ready")
 	check(registry.get_all_materials().size() == 2, "two fixture materials")
 	check(registry.get_all_items().size() == 2, "two fixture items")
+	check(registry.get_all_loot().size() == 6 and registry.has_loot(&"loot_test"), "fixture loot group loads after items")
 	check(registry.has_material(&"steel") and registry.has_item(&"steel"), "IDs are unique per type")
 	var knife = registry.get_item(&"knife")
 	check(knife != null and knife.name == "Knife" and is_equal_approx(knife.mass, 0.25), "typed item values")
@@ -77,6 +78,7 @@ func _run() -> void:
 	for index in range(100):
 		bulk.append({"type": "item", "id": "sample_%d" % index, "name": "Sample", "category": "misc", "materials": ["steel"]})
 	_write("items/items.json", JSON.stringify(bulk))
+	_write("loot/loot.json", JSON.stringify({"type":"loot", "id":"loot_bulk", "rolls":0, "entries":[]}))
 	check(registry.load_all_data(scratch) and registry.get_all_items().size() == 100, "100 items load")
 	check(registry.load_all_data(), "production data loads")
 	check(registry.get_all_materials().size() >= 5 and registry.get_all_items().size() >= 10, "production minimum counts")
@@ -103,7 +105,7 @@ func _ids(definitions: Array) -> Array:
 
 func _prepare() -> void:
 	_remove_tree(scratch)
-	for relative in ["core/load_order.json", "materials/materials.json", "items/items.json"]:
+	for relative in ["core/load_order.json", "materials/materials.json", "items/items.json", "loot/loot.json"]:
 		_write(relative, FileAccess.get_file_as_string(FIXTURES + "valid/" + relative))
 
 

@@ -10,7 +10,9 @@ Phase 3 adds a standalone Inventory runtime container. Phase 4 connects it to a
 spatial WorldItem through identity-preserving Player pickup/drop transactions.
 Phase 5 adds a generic Inventory-to-Inventory transfer layer and a world
 Container that owns its own Inventory. Inventory itself remains separate: it
-does not depend on Player, World, Interaction or UI.
+does not depend on Player, World, Interaction or UI. Phase 6 adds static Loot
+definitions, resolution through injected RNG, and atomic Container Inventory
+population.
 
 Gameplay Data
 -> Data Registry
@@ -131,14 +133,14 @@ grammar and conversion.
 
 `game/scripts/data/data_validator.gd` owns manifest, schema, ID, duplicate and
 reference rules. It collects errors and unknown-field warnings with source and
-field context. The only current types are material and item.
+field context. Supported types are material, item and loot.
 
 `game/scripts/data/definitions/` contains typed `RefCounted` definitions. These
 represent shared static data and carry their source file for diagnostics.
 
 `game/autoload/data_registry.gd` is registered as the `DataRegistry` Autoload.
-Its `_ready()` loads materials before items. It builds temporary dictionaries,
-publishes both only after all validation succeeds, and provides dictionary-based
+Its `_ready()` loads materials, then items, then loot. It builds temporary dictionaries,
+publishes them only after all validation succeeds, and provides dictionary-based
 O(1) ID lookup. Failed initial loads and reloads leave it unloaded and empty;
 callers cannot accidentally query partially loaded or stale data. Loading is
 synchronous, and the startup scene runs after Autoload initialization.
@@ -154,6 +156,9 @@ func get_item(id: StringName) -> ItemDefinition
 func has_item(id: StringName) -> bool
 func get_all_materials() -> Array
 func get_all_items() -> Array
+func get_loot(id: StringName) -> LootDefinition
+func has_loot(id: StringName) -> bool
+func get_all_loot() -> Array
 func get_errors() -> Array[String]
 func get_warnings() -> Array[String]
 ```
@@ -192,6 +197,29 @@ It uses `user://` temporary fixtures and never changes production content.
 Export packaging is outside this phase. When adding export presets, explicitly
 include runtime JSON files and exclude regression-test fixtures, then verify the
 same loading contract in the exported build.
+
+## Implemented Loot Foundation (Phase 6)
+
+```text
+Loot JSON -> LootDefinition -> DataRegistry -> LootResolver -> ItemFactory
+          -> ItemInstance[] -> ContainerLootPopulator -> Inventory
+```
+
+`LootDefinition` and `LootEntry` hold static IDs and selection settings only.
+Entries reference items by `item_id`; the registry validates those references
+after the item group. `LootResolver` receives a ready DataRegistry, an ItemFactory
+and a caller-owned RandomNumberGenerator. Per roll it selects by cumulative
+weight, checks chance, rolls inclusive quantity, then creates independent
+ItemInstances. It returns a success flag, items and diagnostics without depending
+on Player, scenes or Inventory. Loot RNG controls selection, chance and quantity;
+ItemFactory UUID generation remains independent.
+
+`ContainerLootPopulator` resolves the complete group, checks item validity,
+identity uniqueness and combined capacity, then uses Inventory's public add API.
+An unexpected add failure removes only IDs added by that attempt. Existing
+Inventory contents are preserved. Re-populating is allowed because no persistent
+generated-state flag exists yet. Containers remain empty by default; test setup
+decides which Loot group to populate.
 
 ## Implemented Item Runtime Foundation (Phase 0B)
 

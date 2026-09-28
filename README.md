@@ -87,7 +87,7 @@ python -m unittest discover -s tools/tests -v
 ```
 
 All tools return 0 on success and 1 for content errors. `--data-root PATH`
-selects another data root containing `core/`, `materials/` and `items/`.
+selects another data root containing `core/`, `materials/`, `items/` and `loot/`.
 The default root is resolved relative to the tools, independent of the working directory.
 The syntax checker scans all JSON recursively. The other three tools validate
 the complete supported schemas, IDs and references before reporting success.
@@ -111,16 +111,18 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' --script res://tests/unit/inventory/test_inventory_transfer.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/containers/test_container_foundation.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/containers/test_container_integration.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/loot/test_loot_registry.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/loot/test_loot_resolution.gd
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
 as well as its exit code. The second starts the real Autoload and the Player
-Foundation test world. Expected output includes `Materials: 5; Items: 10`
+Foundation test world. Expected output includes `Materials: 5; Items: 10; Loot: 9`
 and `[PlayerFoundation] Test world ready`. Startup terminates with exit code 1
 if data validation fails. The original data-only scene remains available at
 `res://scenes/bootstrap/data_smoke_test.tscn`.
 
-The final twelve commands run static-data, runtime-item, player, interaction,
+The final fourteen commands run static-data, runtime-item, player, interaction,
 Inventory, WorldItem, transfer and Container tests and return nonzero if any check fails. The runtime suite also creates 10,000 live
 instances across two factories to check UUID uniqueness and format.
 Negative cases intentionally emit errors/warnings; the final check summary
@@ -194,6 +196,20 @@ container and each Inventory's count and weight. Press **1** to transfer one ite
 from the Player to the active Container or **2** for the reverse transfer. These
 keys exist only in this test scene; gameplay interaction remains on E.
 
+## Run and Check Loot Foundation
+
+Run the fixed-seed Loot test scene:
+
+```powershell
+& $godotExecutable --path './game' res://debug/test_scenes/loot_test.tscn
+```
+
+It populates two empty Containers with kitchen and medical test groups and shows
+their seeds, item counts and generated definition IDs. The dedicated tests cover
+static validation, weighted selection, chance, quantity, seed repeatability,
+capacity rejection and add-failure rollback. Re-population is allowed; this
+development scene does not add Loot UI or automatic world placement.
+
 ## Development Rules
 
 Read `AGENTS.md` before making significant changes.
@@ -210,7 +226,7 @@ Important principles:
 
 ## Current Development Phase
 
-Phase 5: Container Foundation
+Phase 6: Loot Foundation
 
 Implemented: deterministic JSON loading, typed material/item definitions,
 atomic DataRegistry publication, schema/ID/reference validation, Python tools,
@@ -225,19 +241,20 @@ Phase 2 adds a generic Interactable contract, proximity targeting and a debug
 interaction pipeline. Phase 3 adds a reusable Inventory runtime object that
 holds ItemInstances, calculates definition-backed weight and supports strict
 in-memory serialization. Phase 4 adds spatial WorldItems and identity-preserving
-pickup/drop through PlayerInventoryComponent. Containers, loot, UI and persistence
-remain deferred.
+pickup/drop through PlayerInventoryComponent.
 
 Phase 5 adds generic atomic Inventory transfer, empty-by-default world Containers
-with independent Inventories, and Player-local Container access. Loot, UI and
-persistence remain deferred.
+with independent Inventories, and Player-local Container access. Phase 6 adds
+validated Loot groups, injected-RNG resolution into independent ItemInstances,
+and all-or-nothing capacity-aware Container population. Map placement, search,
+UI and persistence remain deferred.
 
 ## Project Status
 
 Repository initialization, static data, item runtime, player movement,
 interaction, Inventory and WorldItem pickup/drop foundations are implemented.
-Container access and Inventory transfers are also implemented. No Inventory or
-Container UI, Loot generation or full save/load is implemented.
+Container access, Inventory transfers and the Loot foundation are implemented.
+No Inventory or Container UI, map-based Loot placement or full save/load is implemented.
 Existing engine settings are preserved; the project uses the DataRegistry Autoload
 and the Player Foundation test-world entry scene. See [Data Schema](docs/DATA_SCHEMA.md) and
 [Architecture](docs/ARCHITECTURE.md) for the current contract.
@@ -249,4 +266,4 @@ The current Godot executables and VS Code shortcut live outside this repository.
 The first-stage empty directories exist locally. Git does not preserve empty
 directories; create them as needed after cloning. No placeholder files are required.
 
-Next phase, specified separately: Phase 6 - Loot Foundation.
+Next phase, specified separately: Phase 7 - Survival Foundation.

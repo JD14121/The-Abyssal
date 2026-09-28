@@ -15,10 +15,14 @@ import re
 
 
 DEFAULT_DATA_ROOT = Path(__file__).resolve().parents[1] / "game/data"
-GROUP_TYPES = {"materials": "material", "items": "item"}
+GROUP_TYPES = {"materials": "material", "items": "item", "loot": "loot"}
 ID_PATTERN = re.compile(r"[a-z][a-z0-9_]*", re.ASCII)
 COMMON_FIELDS = {"type", "id", "name"}
-TYPE_FIELDS = {"material": {"density", "flammable"}, "item": {"category", "mass", "materials"}}
+TYPE_FIELDS = {
+    "material": {"density", "flammable"},
+    "item": {"category", "mass", "materials"},
+    "loot": {"rolls", "entries"},
+}
 
 
 @dataclass
@@ -26,7 +30,7 @@ class ContentResult:
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     files: int = 0
-    definitions: dict[str, dict] = field(default_factory=lambda: {"material": {}, "item": {}})
+    definitions: dict[str, dict] = field(default_factory=lambda: {"material": {}, "item": {}, "loot": {}})
     sources: dict[tuple[str, str], str] = field(default_factory=dict)
 
 
@@ -72,7 +76,8 @@ def validate_entry(entry, expected_type: str, source: str, result: ContentResult
     def error(field_name, reason):
         result.errors.append(f"{context} | field {field_name}: {reason}")
 
-    for name in ("type", "id", "name") + (("category",) if expected_type == "item" else ()):
+    required = ("type", "id") if expected_type == "loot" else ("type", "id", "name") + (("category",) if expected_type == "item" else ())
+    for name in required:
         if name not in entry:
             error(name, "missing required field")
         elif not isinstance(entry[name], str) or not entry[name].strip():
@@ -86,7 +91,7 @@ def validate_entry(entry, expected_type: str, source: str, result: ContentResult
         if identifier in result.definitions[expected_type]:
             error("id", f"duplicate ID; first defined in {result.sources[(expected_type, identifier)]}")
     numeric = "density" if expected_type == "material" else "mass"
-    if numeric in entry:
+    if expected_type in ("material", "item") and numeric in entry:
         value = entry[numeric]
         if type(value) not in (int, float):
             error(numeric, "expected number (not bool)")
@@ -95,7 +100,7 @@ def validate_entry(entry, expected_type: str, source: str, result: ContentResult
     if expected_type == "material":
         if "flammable" in entry and type(entry["flammable"]) is not bool:
             error("flammable", "expected bool")
-    elif "materials" in entry:
+    elif expected_type == "item" and "materials" in entry:
         if not isinstance(entry["materials"], list):
             error("materials", "expected array of material IDs")
         else:
@@ -104,9 +109,74 @@ def validate_entry(entry, expected_type: str, source: str, result: ContentResult
                     error("materials", "expected string material ID")
                 elif material_id not in result.definitions["material"]:
                     error("materials", f"unknown material ID {material_id}")
-    for name in sorted(entry.keys() - COMMON_FIELDS - TYPE_FIELDS[expected_type]):
+    elif expected_type == "loot":
+        _validate_loot(entry, context, result, error)
+    common_fields = {"type", "id"} | (set() if expected_type == "loot" else {"name"})
+    for name in sorted(entry.keys() - common_fields - TYPE_FIELDS[expected_type]):
         result.warnings.append(f"{context} | field {name}: unknown optional field")
     return len(result.errors) == start
+
+
+def _validate_loot(entry, context, result, error):
+    rolls = entry.get("rolls")
+    if "rolls" not in entry:
+        error("rolls", "missing required field")
+    elif not _is_nonnegative_integer(rolls):
+        error("rolls", "expected integer >= 0")
+    if "entries" not in entry:
+        error("entries", "missing required field")
+        return
+    entries = entry["entries"]
+    if not isinstance(entries, list):
+        error("entries", "expected array")
+        return
+    if _is_nonnegative_integer(rolls) and rolls > 0 and not entries:
+        result.warnings.append(f"{context} | field entries: loot group has rolls but no entries")
+    for index, loot_entry in enumerate(entries):
+        entry_context = f"{context} | entries[{index}]"
+        if not isinstance(loot_entry, dict):
+            result.errors.append(f"{entry_context} | entry: expected an object")
+            continue
+
+        def entry_error(field_name, reason):
+            result.errors.append(f"{entry_context} | field {field_name}: {reason}")
+
+        item_id = loot_entry.get("item_id")
+        if not isinstance(item_id, str) or not item_id.strip():
+            entry_error("item_id", "expected non-empty string")
+        elif item_id not in result.definitions["item"]:
+            entry_error("item_id", f"unknown item ID {item_id}")
+        weight = loot_entry.get("weight")
+        if "weight" not in loot_entry:
+            entry_error("weight", "missing required field")
+        elif not _is_finite_number(weight) or weight <= 0:
+            entry_error("weight", "expected finite number > 0")
+        chance = loot_entry.get("chance", 1.0)
+        if not _is_finite_number(chance) or not 0 <= chance <= 1:
+            entry_error("chance", "expected finite number in [0.0, 1.0]")
+        minimum = loot_entry.get("min_quantity", 1)
+        maximum = loot_entry.get("max_quantity", minimum)
+        if not _is_nonnegative_integer(minimum):
+            entry_error("min_quantity", "expected integer >= 0")
+        if not _is_nonnegative_integer(maximum) or (_is_nonnegative_integer(minimum) and maximum < minimum):
+            entry_error("max_quantity", "expected integer >= min_quantity")
+        for name in sorted(loot_entry.keys() - {"item_id", "weight", "chance", "min_quantity", "max_quantity"}):
+            result.warnings.append(f"{entry_context} | field {name}: unknown optional field")
+
+
+def _is_nonnegative_integer(value):
+    if type(value) is int:
+        return value >= 0
+    return type(value) is float and math.isfinite(value) and value >= 0 and value.is_integer()
+
+
+def _is_finite_number(value):
+    if type(value) not in (int, float):
+        return False
+    try:
+        return math.isfinite(float(value))
+    except OverflowError:
+        return False
 
 
 def load_content(root: Path) -> ContentResult:
@@ -115,8 +185,8 @@ def load_content(root: Path) -> ContentResult:
     ok, order = read_json(order_path, result)
     if not ok:
         return result
-    if not isinstance(order, dict) or order.get("groups") != ["materials", "items"]:
-        result.errors.append(f"{order_path} | field groups: expected [materials, items] in dependency order")
+    if not isinstance(order, dict) or order.get("groups") != ["materials", "items", "loot"]:
+        result.errors.append(f"{order_path} | field groups: expected [materials, items, loot] in dependency order")
         return result
     for name in sorted(order.keys() - {"groups"}):
         result.warnings.append(f"{order_path} | field {name}: unknown optional field")
@@ -147,7 +217,7 @@ def run_cli(command: str) -> int:
         "content_report": "Report counts only after complete content validation.",
     }[command])
     parser.add_argument("--data-root", type=Path, default=DEFAULT_DATA_ROOT,
-                        help="Data root containing core/, materials/ and items/.")
+        help="Data root containing core/, materials/, items/ and loot/.")
     root = parser.parse_args().data_root.resolve()
     if command == "validate_json":
         result = ContentResult()
@@ -169,12 +239,14 @@ def run_cli(command: str) -> int:
     if command != "validate_json":
         materials = result.definitions["material"]
         items = result.definitions["item"]
-        print(f"Materials: {len(materials)}\nItems: {len(items)}")
+        loot = result.definitions["loot"]
+        loot_entries = sum(len(group["entries"]) for group in loot.values())
+        print(f"Materials: {len(materials)}\nItems: {len(items)}\nLoot Groups: {len(loot)}\nLoot Entries: {loot_entries}")
         if command == "content_report":
             print("Item Categories:")
             for category, count in sorted(Counter(item["category"] for item in items.values()).items()):
                 print(f"{category}: {count}")
-            print(f"Total Definitions: {len(materials) + len(items)}")
+            print(f"Total Definitions: {len(materials) + len(items) + len(loot)}")
         else:
             print("Schema / IDs / References: 0 errors")
     print("PASS")

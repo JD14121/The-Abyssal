@@ -4,6 +4,12 @@
 
 ### Added
 
+- LootDefinition/LootEntry static data, load-order integration and ItemDefinition reference validation
+- Weighted LootResolver with injected RNG, chance checks, quantity ranges and ItemFactory instances
+- Atomic Container Inventory population with capacity prevalidation and rollback
+- Original test Loot groups, invalid fixtures, Python reporting support and fixed-seed Loot test scene
+- Loot schema, authoring workflow and pipeline documentation
+
 - Generic InventoryTransfer with shared prevalidation, identity preservation and same-instance rollback
 - WorldContainer scene with an independent empty-by-default Inventory
 - Player-local Container access that clears when leaving range or when the Container is freed
@@ -59,4 +65,5 @@
 - Added Player run commands and manual movement/collision/camera acceptance steps
 
 - Documented actual schemas, defaults, query APIs, startup and validation commands
+- Added Loot as the third static data group after Materials and Items
 - Added DataRegistry and the verification main scene while preserving engine settings

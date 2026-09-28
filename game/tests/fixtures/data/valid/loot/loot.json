@@ -1,0 +1,8 @@
+[
+  {"type": "loot", "id": "loot_test", "rolls": 2, "entries": [{"item_id": "knife", "weight": 1, "chance": 1.0, "min_quantity": 2, "max_quantity": 2}]},
+  {"type": "loot", "id": "loot_empty", "rolls": 0, "entries": []},
+  {"type": "loot", "id": "loot_zero_rolls", "rolls": 0, "entries": [{"item_id": "knife", "weight": 1}]},
+  {"type": "loot", "id": "loot_chance_zero", "rolls": 1, "entries": [{"item_id": "knife", "weight": 1, "chance": 0}]},
+  {"type": "loot", "id": "loot_chance_one", "rolls": 1, "entries": [{"item_id": "knife", "weight": 1, "chance": 1}]},
+  {"type": "loot", "id": "loot_weighted", "rolls": 100, "entries": [{"item_id": "knife", "weight": 9}, {"item_id": "steel", "weight": 1}]}
+]

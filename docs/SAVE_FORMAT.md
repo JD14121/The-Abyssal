@@ -107,6 +107,10 @@ now moves the same `ItemInstance` between separate Inventories atomically in the
 normal transfer path; it does not add a global ownership registry. Detecting
 duplicate ownership created outside that controlled API remains future work.
 
+Loot definitions are static data and are not embedded in runtime saves.
+Generated ItemInstances are represented by the existing serialized Inventory
+runtime state; Loot group IDs and roll history are not recorded.
+
 ## Requirements
 
 Future saves should:

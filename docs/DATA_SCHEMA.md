@@ -32,7 +32,7 @@ Phase 0 supports:
 1. Material
 2. Item
 
-Additional types will be added incrementally.
+Phase 6 adds Loot groups. Additional types will be added incrementally.
 
 ## Files and Load Order
 
@@ -44,16 +44,17 @@ invalid escapes and malformed numeric tokens, are rejected.
 `game/data/core/load_order.json` contains:
 
 ```json
-{"groups": ["materials", "items"]}
+{"groups": ["materials", "items", "loot"]}
 ```
 
-Both groups must appear exactly once in this order in this initial version.
+All three groups must appear exactly once in this dependency order.
 Missing, reordered, duplicated or unknown groups are fatal. Supporting additional
 groups requires an explicit schema/implementation change. The manifest is
 configuration, not a gameplay definition, so it needs no `type` or `id`.
 
-The loader recursively reads only lowercase `.json` files in `materials/` and
-`items/`. Paths are sorted lexically within each group and array order is retained.
+Items load before Loot so each Loot Entry can be checked against an existing
+ItemDefinition. The loader recursively reads lowercase `.json` files in
+`materials/`, `items/` and `loot/`. Paths are sorted lexically within each group and array order is retained.
 Directories must exist and be readable. Directory symbolic links are rejected.
 Other directories are not runtime content in this phase; the Python syntax tool
 still checks their JSON files. Broken fixtures live under `game/tests/fixtures/data/`
@@ -124,6 +125,51 @@ Initial required fields:
 Optional means absent, not `null`. Values are not silently coerced. Categories
 such as food, medicine, weapon, tool, clothing and misc are examples, not an enum.
 
+## Loot Group
+
+Loot groups describe possible static item outcomes. They do not contain runtime
+ItemInstances or copies of ItemDefinition fields.
+
+```json
+{
+  "type": "loot",
+  "id": "loot_test_kitchen",
+  "rolls": 3,
+  "entries": [
+    {"item_id": "canned_beans", "weight": 10, "chance": 1.0, "min_quantity": 1, "max_quantity": 2}
+  ]
+}
+```
+
+| Field | Validation | Default |
+| --- | --- | --- |
+| `type` | String equal to `loot`, in the loot group | Required |
+| `id` | Stable ASCII ID, unique within Loot definitions | Required |
+| `rolls` | Finite, nonnegative integer value; bools and fractional values are rejected | Required |
+| `entries` | Array of entry objects; an empty array is valid | Required |
+
+Each entry supports:
+
+| Field | Validation | Default |
+| --- | --- | --- |
+| `item_id` | Non-empty stable ID resolving to a loaded ItemDefinition | Required |
+| `weight` | Finite number greater than zero; fractional weights are allowed | Required |
+| `chance` | Finite number in `[0.0, 1.0]` | `1.0` |
+| `min_quantity` | Nonnegative integer value | `1` |
+| `max_quantity` | Integer value greater than or equal to `min_quantity` | `min_quantity` |
+
+For each roll with nonempty entries, the resolver follows this order:
+
+```text
+weighted entry selection -> chance check -> inclusive quantity roll -> ItemFactory creation
+```
+
+Chance failure creates nothing for that roll. On success it creates that many
+separate ItemInstances through ItemFactory. Rolls use replacement, so
+an entry may be selected repeatedly. `rolls: 0` or an empty entries array resolves
+successfully to no items; positive rolls with no entries also produce a warning.
+Unknown definition and entry fields warn and are ignored.
+
 ## References
 
 References use stable IDs.
@@ -136,6 +182,9 @@ Example:
 ]
 
 Every referenced ID must exist.
+
+Loot Entry `item_id` values must resolve to an ItemDefinition loaded earlier in
+the manifest.
 
 Invalid references must produce validation errors.
 

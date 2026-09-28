@@ -20,6 +20,8 @@ class DataToolTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.data = Path(self.temp.name) / "data"
         shutil.copytree(FIXTURES / "valid", self.data)
+        self.write("loot/loot.json", [{"type": "loot", "id": "loot_test", "rolls": 1,
+                                      "entries": [{"item_id": "knife", "weight": 1}]}])
 
     def run_tool(self, name, root=None):
         result = subprocess.run(
@@ -41,7 +43,7 @@ class DataToolTests(unittest.TestCase):
                 result = self.run_tool(tool)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         report = self.run_tool("content_report").stdout
-        for expected in ("Materials: 2", "Items: 2", "misc: 1", "weapon: 1", "Total Definitions: 4"):
+        for expected in ("Materials: 2", "Items: 2", "Loot Groups: 1", "Loot Entries: 1", "misc: 1", "weapon: 1", "Total Definitions: 5"):
             self.assertIn(expected, report)
 
     def test_invalid_definitions_fail_with_source_and_reason(self):
@@ -111,9 +113,44 @@ class DataToolTests(unittest.TestCase):
             {"type": "item", "id": f"sample_{index}", "name": "Sample", "category": "misc", "materials": ["steel"]}
             for index in range(100)
         ])
+        self.write("loot/loot.json", [{"type": "loot", "id": "loot_test", "rolls": 1,
+                                      "entries": [{"item_id": "sample_0", "weight": 1}]}])
         result = self.run_tool("content_report")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Items: 100", result.stdout)
+
+    def test_loot_references_validate_and_report_counts(self):
+        result = self.run_tool("content_report")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("Loot Groups: 1", result.stdout)
+        self.assertIn("Loot Entries: 1", result.stdout)
+
+    def test_unknown_loot_item_reference_fails(self):
+        self.write("loot/loot.json", [{"type": "loot", "id": "unknown_ref", "rolls": 1,
+                                       "entries": [{"item_id": "missing", "weight": 1}]}])
+        result = self.run_tool("validate_references")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unknown item ID", (result.stdout + result.stderr))
+
+    def test_fractional_loot_weight_and_entry_defaults_are_valid(self):
+        self.write("loot/loot.json", [{"type": "loot", "id": "fractional_loot", "rolls": 2,
+                                       "entries": [{"item_id": "knife", "weight": 0.25}]}])
+        result = self.run_tool("validate_references")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_duplicate_and_invalid_loot_ids_fail(self):
+        entries = [
+            {"type": "loot", "id": "same", "rolls": 0, "entries": []},
+            {"type": "loot", "id": "same", "rolls": 0, "entries": []},
+        ]
+        self.write("loot/duplicates.json", entries)
+        result = self.run_tool("validate_ids")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("duplicate ID", (result.stdout + result.stderr))
+        self.write("loot/invalid_id.json", {"type": "loot", "id": "Loot-Bad", "rolls": 0, "entries": []})
+        result = self.run_tool("validate_ids")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("lowercase_snake_case", (result.stdout + result.stderr))
 
 
 if __name__ == "__main__":
