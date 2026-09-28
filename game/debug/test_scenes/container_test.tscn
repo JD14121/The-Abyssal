@@ -1,0 +1,56 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1"]
+[ext_resource type="Script" path="res://scripts/world/container_test.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="BoundaryShape"]
+size = Vector2(640, 24)
+
+[node name="ContainerTest" type="Node2D"]
+script = ExtResource("2")
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(200, 240)
+
+[node name="NorthBoundary" type="StaticBody2D" parent="."]
+position = Vector2(320, 100)
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="NorthBoundary"]
+shape = SubResource("BoundaryShape")
+
+[node name="SouthBoundary" type="StaticBody2D" parent="."]
+position = Vector2(320, 380)
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SouthBoundary"]
+shape = SubResource("BoundaryShape")
+
+[node name="WestBoundary" type="StaticBody2D" parent="."]
+position = Vector2(12, 240)
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WestBoundary"]
+rotation = 1.5708
+shape = SubResource("BoundaryShape")
+
+[node name="EastBoundary" type="StaticBody2D" parent="."]
+position = Vector2(628, 240)
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EastBoundary"]
+rotation = 1.5708
+shape = SubResource("BoundaryShape")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Status" type="Label" parent="CanvasLayer"]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 420.0
+offset_bottom = 140.0
+text = "Active Container: None"

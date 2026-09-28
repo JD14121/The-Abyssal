@@ -106,15 +106,22 @@ system was included in Phase 3. Phase 4 follows below.
 - unit, transfer, rollback, round-trip and prior-phase regression suites
 
 At the end of Phase 4, Inventory UI, user-facing drop input, containers, loot,
-stacking, item use, and world persistence remain deferred. Recommended next:
-Phase 5 - Container Foundation.
+stacking, item use, and world persistence remained deferred. Phase 5 follows.
 
 ---
 
-## Phase 5 - Container Foundation
+## Phase 5 - Container Foundation (Complete)
 
-- reusable container runtime state
-- transfer ItemInstances between inventories
+- generic InventoryTransfer with shared add prevalidation, capacity checks and rollback
+- same ItemInstance transfer between independent Inventories without owner-type dependencies
+- transfer rejection for null/invalid inventories, self-transfer, unknown IDs, duplicates and capacity
+- reusable empty-by-default WorldContainer scene owning an independent Inventory
+- Player-local ContainerAccessComponent with generic interaction and safe range/free cleanup
+- Player ↔ Container transfers and test-only debug scene controls
+- transfer invariant, rollback, Container and real interaction integration tests
+
+No Loot, random contents, UI, stacking, batch transfer or persistence is included.
+Recommended next: Phase 6 - Loot Foundation.
 
 ---
 

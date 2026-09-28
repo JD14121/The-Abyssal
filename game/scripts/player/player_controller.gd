@@ -20,3 +20,10 @@ func try_pickup_world_item(world_item: Variant) -> bool:
 	if inventory_component == null:
 		return false
 	return inventory_component.try_pickup_world_item(world_item)
+
+
+func set_active_container(container: Variant) -> bool:
+	var access_component := get_node_or_null("ContainerAccessComponent")
+	if access_component == null:
+		return false
+	return access_component.set_active_container(container)

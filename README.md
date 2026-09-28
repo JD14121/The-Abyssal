@@ -108,6 +108,9 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' --script res://tests/unit/inventory/test_inventory_stress.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/items/test_world_item_foundation.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/interaction/test_world_item_integration.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/inventory/test_inventory_transfer.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/containers/test_container_foundation.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/containers/test_container_integration.gd
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
@@ -117,8 +120,8 @@ and `[PlayerFoundation] Test world ready`. Startup terminates with exit code 1
 if data validation fails. The original data-only scene remains available at
 `res://scenes/bootstrap/data_smoke_test.tscn`.
 
-The final nine commands run static-data, runtime-item, player, interaction,
-Inventory and WorldItem tests and return nonzero if any check fails. The runtime suite also creates 10,000 live
+The final twelve commands run static-data, runtime-item, player, interaction,
+Inventory, WorldItem, transfer and Container tests and return nonzero if any check fails. The runtime suite also creates 10,000 live
 instances across two factories to check UUID uniqueness and format.
 Negative cases intentionally emit errors/warnings; the final check summary
 distinguishes expected rejections from test failures. Tests use isolated temporary
@@ -178,6 +181,19 @@ items for nearest-target and candidate-cleanup checks; it has no drop input or
 Inventory UI. The two Phase 4 test scripts are listed with the Godot regression
 commands above.
 
+## Run and Check Container Foundation
+
+Run the dedicated Container scene:
+
+```powershell
+& $godotExecutable --path './game' res://debug/test_scenes/container_test.tscn
+```
+
+Move near a container and press E to access it. The debug scene shows the active
+container and each Inventory's count and weight. Press **1** to transfer one item
+from the Player to the active Container or **2** for the reverse transfer. These
+keys exist only in this test scene; gameplay interaction remains on E.
+
 ## Development Rules
 
 Read `AGENTS.md` before making significant changes.
@@ -194,7 +210,7 @@ Important principles:
 
 ## Current Development Phase
 
-Phase 4: World Item and Pickup/Drop Foundation
+Phase 5: Container Foundation
 
 Implemented: deterministic JSON loading, typed material/item definitions,
 atomic DataRegistry publication, schema/ID/reference validation, Python tools,
@@ -212,11 +228,16 @@ in-memory serialization. Phase 4 adds spatial WorldItems and identity-preserving
 pickup/drop through PlayerInventoryComponent. Containers, loot, UI and persistence
 remain deferred.
 
+Phase 5 adds generic atomic Inventory transfer, empty-by-default world Containers
+with independent Inventories, and Player-local Container access. Loot, UI and
+persistence remain deferred.
+
 ## Project Status
 
 Repository initialization, static data, item runtime, player movement,
 interaction, Inventory and WorldItem pickup/drop foundations are implemented.
-No Inventory UI, Container gameplay or full save/load is implemented.
+Container access and Inventory transfers are also implemented. No Inventory or
+Container UI, Loot generation or full save/load is implemented.
 Existing engine settings are preserved; the project uses the DataRegistry Autoload
 and the Player Foundation test-world entry scene. See [Data Schema](docs/DATA_SCHEMA.md) and
 [Architecture](docs/ARCHITECTURE.md) for the current contract.
@@ -228,4 +249,4 @@ The current Godot executables and VS Code shortcut live outside this repository.
 The first-stage empty directories exist locally. Git does not preserve empty
 directories; create them as needed after cloning. No placeholder files are required.
 
-Next phase, specified separately: Phase 5 - Container Foundation.
+Next phase, specified separately: Phase 6 - Loot Foundation.

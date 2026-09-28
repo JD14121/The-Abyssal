@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/interaction/interaction_component.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/player/player_inventory_component.gd" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/items/world_item.tscn" id="4"]
+[ext_resource type="Script" path="res://scripts/player/container_access_component.gd" id="5"]
 
 [sub_resource type="RectangleShape2D" id="PlayerShape"]
 size = Vector2(32, 32)
@@ -39,3 +40,6 @@ shape = SubResource("InteractionRange")
 [node name="PlayerInventoryComponent" type="Node" parent="."]
 script = ExtResource("3")
 world_item_scene = ExtResource("4")
+
+[node name="ContainerAccessComponent" type="Node" parent="."]
+script = ExtResource("5")

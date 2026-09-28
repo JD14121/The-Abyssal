@@ -4,6 +4,13 @@
 
 ### Added
 
+- Generic InventoryTransfer with shared prevalidation, identity preservation and same-instance rollback
+- WorldContainer scene with an independent empty-by-default Inventory
+- Player-local Container access that clears when leaving range or when the Container is freed
+- Player-to-Container and Container-to-Player transfer integration
+- Transfer invariants, rollback, Container foundation and interaction integration tests
+- Container debug test scene with active Container and Inventory count/weight feedback
+
 - WorldItem spatial runtime scene holding an existing ItemInstance reference
 - PlayerInventoryComponent owning the Phase 3 Inventory and identity-preserving pickup/drop APIs
 - Pickup transaction, validated drop setup and same-instance rollback on failure

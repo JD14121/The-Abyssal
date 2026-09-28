@@ -29,27 +29,18 @@ func _init(registry: Node, capacity: Variant = 0.0) -> void:
 
 func add_item(value: Variant) -> bool:
 	_errors.clear()
-	if not _configuration_valid:
-		return _fail("inventory: invalid construction settings")
-	if not value is ItemInstance:
-		return _fail("item: expected a valid ItemInstance")
+	if not _validate_add_item(value):
+		return false
 	var item := value as ItemInstance
-	if not item.is_valid():
-		return _fail("item: ItemInstance is invalid")
 	var instance_id := item.instance_id
-	if _item_index.has(instance_id):
-		return _fail("duplicate instance_id: %s" % instance_id)
-	var item_mass := _get_item_mass(item, "item '%s'" % instance_id)
-	if is_nan(item_mass):
-		return false
-	var current_weight := _calculate_total_weight()
-	if is_nan(current_weight):
-		return false
-	if _max_weight > 0.0 and current_weight + item_mass > _max_weight + CAPACITY_EPSILON:
-		return _fail("capacity exceeded: %.6f + %.6f > %.6f" % [current_weight, item_mass, _max_weight])
 	_items.append(item)
 	_item_index[instance_id] = item
 	return true
+
+
+func can_add_item(value: Variant) -> bool:
+	_errors.clear()
+	return _validate_add_item(value)
 
 
 func remove_item(instance_id: String) -> ItemInstance:
@@ -163,6 +154,28 @@ func deserialize(data: Variant, item_factory: Variant) -> bool:
 
 func get_errors() -> Array[String]:
 	return _errors.duplicate()
+
+
+func _validate_add_item(value: Variant) -> bool:
+	if not _configuration_valid:
+		return _fail("inventory: invalid construction settings")
+	if not value is ItemInstance:
+		return _fail("item: expected a valid ItemInstance")
+	var item := value as ItemInstance
+	if not item.is_valid():
+		return _fail("item: ItemInstance is invalid")
+	var instance_id := item.instance_id
+	if _item_index.has(instance_id):
+		return _fail("duplicate instance_id: %s" % instance_id)
+	var item_mass := _get_item_mass(item, "item '%s'" % instance_id)
+	if is_nan(item_mass):
+		return false
+	var current_weight := _calculate_total_weight()
+	if is_nan(current_weight):
+		return false
+	if _max_weight > 0.0 and current_weight + item_mass > _max_weight + CAPACITY_EPSILON:
+		return _fail("capacity exceeded: %.6f + %.6f > %.6f" % [current_weight, item_mass, _max_weight])
+	return true
 
 
 func _calculate_total_weight() -> float:

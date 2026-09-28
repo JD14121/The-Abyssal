@@ -8,8 +8,9 @@ item runtime records, creation and record serialization. Phase 1 adds a locally
 controlled 2D player and a collision test world; Phase 2 adds local interaction;
 Phase 3 adds a standalone Inventory runtime container. Phase 4 connects it to a
 spatial WorldItem through identity-preserving Player pickup/drop transactions.
-Inventory itself remains separate: it does not depend on Player, World,
-Interaction or UI.
+Phase 5 adds a generic Inventory-to-Inventory transfer layer and a world
+Container that owns its own Inventory. Inventory itself remains separate: it
+does not depend on Player, World, Interaction or UI.
 
 Gameplay Data
 -> Data Registry
@@ -460,3 +461,50 @@ placeholder WorldItems and displays Inventory count, total weight and the last
 picked-up instance ID. Unit and integration tests exercise reference identity,
 capacity rejection, duplicate IDs, drop setup failures, rollback, round-trip
 weight and real Area2D/E-key target cleanup.
+
+## Implemented Inventory Transfer and Container Foundation (Phase 5)
+
+```text
+Player
+├─ PlayerInventoryComponent -> Inventory ─┐
+└─ ContainerAccessComponent                │
+                                            ├─ InventoryTransfer
+WorldContainer -> Inventory ────────────────┘
+```
+
+`game/scripts/inventory/inventory_transfer.gd` implements the generic
+`transfer_item(source, destination, instance_id)` operation. It validates both
+Inventories, rejects self-transfer and unknown IDs, and calls the destination's
+`can_add_item()` before changing either side. `can_add_item()` and `add_item()`
+share the same Inventory validation path, including ItemInstance validity,
+duplicate IDs, live definition-backed mass and the existing capacity tolerance.
+
+After prevalidation, transfer removes the existing reference from the source
+and passes it directly to the destination. An unexpected destination rejection
+restores that same object to the source. A failed restoration emits `push_error`
+with the instance ID, both Inventory object IDs and both failure reasons. The
+normal operation neither serializes/reconstructs an item nor calls ItemFactory;
+identity, definition ID, condition, total item count and combined weight remain
+unchanged.
+
+`game/scripts/containers/world_container.gd` is named `WorldContainer` in code
+because Godot already has a built-in `Container` Control class. Its Area2D scene
+implements the existing generic `Interactable` contract and creates one
+independent Phase 3 Inventory on readiness. Each production Container starts
+empty. It has no Player Inventory component, loot generation, save record or
+persistent ID.
+
+`ContainerAccessComponent` stores a Player-local active WorldContainer after its
+Interactable handles E through the Player's thin `set_active_container()`
+forwarder. It checks the generic InteractionComponent candidate list and clears
+the active reference when the Container leaves range or is freed. The
+InteractionComponent does not check for Container types. Transfers remain
+independent of interaction and can operate on any two Inventory objects.
+
+`game/debug/test_scenes/container_test.tscn` seeds fixed test-only items and
+shows the active Container plus each side's count and weight. The test-only 1/2
+keys transfer one item in either direction; the project's Input Map is unchanged.
+Automated tests cover same-reference transfer, reverse transfer, duplicates,
+capacity and exact-capacity cases, source restoration after an unexpected add
+failure, combined count/weight invariants, independent empty Containers, access
+cleanup, both Player/Container directions and Player-capacity rejection.

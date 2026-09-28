@@ -102,9 +102,10 @@ Inventory instance. Inventory state has no version field yet; versioning remains
 deferred until actual persistence is introduced.
 
 This is JSON-compatible runtime-state preparation only. There is still no
-SaveManager, file I/O, slot management or disk persistence. The same
-`ItemInstance` reference can currently be added to separate Inventory objects;
-global identity ownership and cross-inventory atomic transfer are future work.
+SaveManager, file I/O, slot management or disk persistence. `InventoryTransfer`
+now moves the same `ItemInstance` between separate Inventories atomically in the
+normal transfer path; it does not add a global ownership registry. Detecting
+duplicate ownership created outside that controlled API remains future work.
 
 ## Requirements
 
