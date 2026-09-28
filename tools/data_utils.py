@@ -15,13 +15,14 @@ import re
 
 
 DEFAULT_DATA_ROOT = Path(__file__).resolve().parents[1] / "game/data"
-GROUP_TYPES = {"materials": "material", "items": "item", "loot": "loot"}
+GROUP_TYPES = {"materials": "material", "items": "item", "loot": "loot", "consumables": "consumable"}
 ID_PATTERN = re.compile(r"[a-z][a-z0-9_]*", re.ASCII)
 COMMON_FIELDS = {"type", "id", "name"}
 TYPE_FIELDS = {
     "material": {"density", "flammable"},
     "item": {"category", "mass", "materials"},
     "loot": {"rolls", "entries"},
+    "consumable": {"item_id", "hunger_delta", "thirst_delta"},
 }
 
 
@@ -30,8 +31,9 @@ class ContentResult:
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     files: int = 0
-    definitions: dict[str, dict] = field(default_factory=lambda: {"material": {}, "item": {}, "loot": {}})
+    definitions: dict[str, dict] = field(default_factory=lambda: {"material": {}, "item": {}, "loot": {}, "consumable": {}})
     sources: dict[tuple[str, str], str] = field(default_factory=dict)
+    consumable_item_sources: dict[str, str] = field(default_factory=dict)
 
 
 def scan_json(directory: Path, result: ContentResult) -> list[Path]:
@@ -76,7 +78,10 @@ def validate_entry(entry, expected_type: str, source: str, result: ContentResult
     def error(field_name, reason):
         result.errors.append(f"{context} | field {field_name}: {reason}")
 
-    required = ("type", "id") if expected_type == "loot" else ("type", "id", "name") + (("category",) if expected_type == "item" else ())
+    if expected_type in ("loot", "consumable"):
+        required = ("type", "id") + (("item_id",) if expected_type == "consumable" else ())
+    else:
+        required = ("type", "id", "name") + (("category",) if expected_type == "item" else ())
     for name in required:
         if name not in entry:
             error(name, "missing required field")
@@ -111,9 +116,27 @@ def validate_entry(entry, expected_type: str, source: str, result: ContentResult
                     error("materials", f"unknown material ID {material_id}")
     elif expected_type == "loot":
         _validate_loot(entry, context, result, error)
-    common_fields = {"type", "id"} | (set() if expected_type == "loot" else {"name"})
+    elif expected_type == "consumable":
+        item_id = entry.get("item_id")
+        if isinstance(item_id, str) and item_id.strip():
+            if item_id not in result.definitions["item"]:
+                error("item_id", f"unknown item ID {item_id}")
+            if item_id in result.consumable_item_sources:
+                error("item_id", f"duplicate Consumable mapping for item ID {item_id}; first defined in {result.consumable_item_sources[item_id]}")
+        for field_name in ("hunger_delta", "thirst_delta"):
+            value = entry.get(field_name, 0.0)
+            if not _is_finite_number(value):
+                error(field_name, "expected finite number")
+        hunger = entry.get("hunger_delta", 0.0)
+        thirst = entry.get("thirst_delta", 0.0)
+    common_fields = {"type", "id"} | ({"name"} if expected_type in ("material", "item") else set())
     for name in sorted(entry.keys() - common_fields - TYPE_FIELDS[expected_type]):
         result.warnings.append(f"{context} | field {name}: unknown optional field")
+    if (expected_type == "consumable" and len(result.errors) == start
+            and _is_finite_number(entry.get("hunger_delta", 0.0))
+            and _is_finite_number(entry.get("thirst_delta", 0.0))
+            and entry.get("hunger_delta", 0.0) == 0.0 and entry.get("thirst_delta", 0.0) == 0.0):
+        result.warnings.append(f"{context} | fields hunger_delta/thirst_delta: Consumable has zero effect")
     return len(result.errors) == start
 
 
@@ -185,8 +208,9 @@ def load_content(root: Path) -> ContentResult:
     ok, order = read_json(order_path, result)
     if not ok:
         return result
-    if not isinstance(order, dict) or order.get("groups") != ["materials", "items", "loot"]:
-        result.errors.append(f"{order_path} | field groups: expected [materials, items, loot] in dependency order")
+    valid_orders = (["materials", "items", "loot"], ["materials", "items", "loot", "consumables"])
+    if not isinstance(order, dict) or order.get("groups") not in valid_orders:
+        result.errors.append(f"{order_path} | field groups: expected materials, items, loot, optionally followed by consumables")
         return result
     for name in sorted(order.keys() - {"groups"}):
         result.warnings.append(f"{order_path} | field {name}: unknown optional field")
@@ -206,6 +230,8 @@ def load_content(root: Path) -> ContentResult:
                 if validate_entry(entry, expected_type, source, result):
                     result.definitions[expected_type][entry["id"]] = entry
                     result.sources[(expected_type, entry["id"])] = source
+                    if expected_type == "consumable":
+                        result.consumable_item_sources[entry["item_id"]] = source
     return result
 
 
@@ -217,7 +243,7 @@ def run_cli(command: str) -> int:
         "content_report": "Report counts only after complete content validation.",
     }[command])
     parser.add_argument("--data-root", type=Path, default=DEFAULT_DATA_ROOT,
-        help="Data root containing core/, materials/, items/ and loot/.")
+        help="Data root containing core/, materials/, items/, loot/ and optionally consumables/.")
     root = parser.parse_args().data_root.resolve()
     if command == "validate_json":
         result = ContentResult()
@@ -240,13 +266,14 @@ def run_cli(command: str) -> int:
         materials = result.definitions["material"]
         items = result.definitions["item"]
         loot = result.definitions["loot"]
+        consumables = result.definitions["consumable"]
         loot_entries = sum(len(group["entries"]) for group in loot.values())
-        print(f"Materials: {len(materials)}\nItems: {len(items)}\nLoot Groups: {len(loot)}\nLoot Entries: {loot_entries}")
+        print(f"Materials: {len(materials)}\nItems: {len(items)}\nLoot Groups: {len(loot)}\nLoot Entries: {loot_entries}\nConsumables: {len(consumables)}")
         if command == "content_report":
             print("Item Categories:")
             for category, count in sorted(Counter(item["category"] for item in items.values()).items()):
                 print(f"{category}: {count}")
-            print(f"Total Definitions: {len(materials) + len(items) + len(loot)}")
+            print(f"Total Definitions: {len(materials) + len(items) + len(loot) + len(consumables)}")
         else:
             print("Schema / IDs / References: 0 errors")
     print("PASS")

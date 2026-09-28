@@ -1,4 +1,4 @@
-"""Validate item-to-material and loot-to-item references and prerequisites."""
+"""Validate static definition references and their prerequisites."""
 
 from data_utils import run_cli
 

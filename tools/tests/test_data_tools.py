@@ -20,6 +20,8 @@ class DataToolTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.data = Path(self.temp.name) / "data"
         shutil.copytree(FIXTURES / "valid", self.data)
+        self.write("core/load_order.json", {"groups": ["materials", "items", "loot", "consumables"]})
+        self.write("consumables/consumables.json", [])
         self.write("loot/loot.json", [{"type": "loot", "id": "loot_test", "rolls": 1,
                                       "entries": [{"item_id": "knife", "weight": 1}]}])
 
@@ -151,6 +153,43 @@ class DataToolTests(unittest.TestCase):
         result = self.run_tool("validate_ids")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("lowercase_snake_case", (result.stdout + result.stderr))
+
+    def test_consumable_reference_and_content_report(self):
+        self.write("consumables/consumables.json", [
+            {"type": "consumable", "id": "consumable_knife_test", "item_id": "knife",
+             "hunger_delta": -5.0},
+        ])
+        result = self.run_tool("content_report")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for expected in ("Consumables: 1", "Total Definitions: 6"):
+            self.assertIn(expected, result.stdout)
+
+    def test_consumable_static_errors(self):
+        cases = json.loads((ROOT / "game/tests/fixtures/consumables/invalid_cases.json").read_text(encoding="utf-8"))
+        for case in cases:
+            with self.subTest(case=case["name"]):
+                self.write("consumables/invalid.json", case["entries"])
+                result = self.run_tool("validate_references")
+                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn(case["diagnostic"], (result.stdout + result.stderr))
+                (self.data / "consumables/invalid.json").unlink()
+
+    def test_consumable_overflow_effect_is_rejected(self):
+        path = self.data / "consumables/invalid.json"
+        path.write_text('[{"type":"consumable","id":"overflow","item_id":"knife","hunger_delta":1e999}]', encoding="utf-8")
+        result = self.run_tool("validate_references")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("hunger_delta", result.stdout + result.stderr)
+
+    def test_zero_effect_consumable_warns_but_loads(self):
+        self.write("consumables/consumables.json", {
+            "type": "consumable", "id": "consumable_zero", "item_id": "knife",
+            "hunger_delta": 0.0, "thirst_delta": 0.0,
+        })
+        result = self.run_tool("content_report")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("WARNING", result.stdout)
+        self.assertIn("zero effect", result.stdout)
 
 
 if __name__ == "__main__":

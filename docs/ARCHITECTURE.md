@@ -13,7 +13,9 @@ Container that owns its own Inventory. Inventory itself remains separate: it
 does not depend on Player, World, Interaction or UI. Phase 6 adds static Loot
 definitions, resolution through injected RNG, and atomic Container Inventory
 population. Phase 7 adds a shared logical GameClock and per-entity SurvivalState
-advanced by a Player-local SurvivalComponent.
+advanced by a Player-local SurvivalComponent. Phase 8 adds static Consumable
+profiles and a service that atomically coordinates Inventory item use with
+SurvivalState effects.
 
 Gameplay Data
 -> Data Registry
@@ -146,13 +148,13 @@ grammar and conversion.
 
 `game/scripts/data/data_validator.gd` owns manifest, schema, ID, duplicate and
 reference rules. It collects errors and unknown-field warnings with source and
-field context. Supported types are material, item and loot.
+field context. Supported types are material, item, loot and consumable.
 
 `game/scripts/data/definitions/` contains typed `RefCounted` definitions. These
 represent shared static data and carry their source file for diagnostics.
 
 `game/autoload/data_registry.gd` is registered as the `DataRegistry` Autoload.
-Its `_ready()` loads materials, then items, then loot. It builds temporary dictionaries,
+Its `_ready()` loads materials, then items, loot and consumables. It builds temporary dictionaries,
 publishes them only after all validation succeeds, and provides dictionary-based
 O(1) ID lookup. Failed initial loads and reloads leave it unloaded and empty;
 callers cannot accidentally query partially loaded or stale data. Loading is
@@ -233,6 +235,26 @@ An unexpected add failure removes only IDs added by that attempt. Existing
 Inventory contents are preserved. Re-populating is allowed because no persistent
 generated-state flag exists yet. Containers remain empty by default; test setup
 decides which Loot group to populate.
+
+## Implemented Consumable Foundation (Phase 8)
+
+```text
+Consumable JSON -> ConsumableDefinition -> DataRegistry
+ItemInstance.definition_id -> item-to-Consumable index
+Inventory + SurvivalState -> ConsumableUseService -> Inventory + SurvivalState
+```
+
+Consumable profiles reference an ItemDefinition and contain only finite hunger
+and thirst deltas. The Registry indexes profiles by their own ID and by the
+unique referenced Item ID. A category string does not grant use behavior.
+
+`ConsumableUseService` coordinates one explicit Inventory instance: it validates
+the Registry, Inventory, SurvivalState and requested ItemInstance; snapshots
+hunger/thirst; removes that exact `instance_id`; and applies both deltas through
+SurvivalState mutation APIs. If an effect fails, it restores both values and
+re-adds the same ItemInstance. Rollback failure is reported with the instance
+and Inventory identities. Inventory only holds items, and SurvivalState does
+not know about item definitions.
 
 ## Implemented Item Runtime Foundation (Phase 0B)
 

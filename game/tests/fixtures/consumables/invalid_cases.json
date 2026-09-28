@@ -1,0 +1,9 @@
+[
+  {"name":"invalid_id", "entries":[{"type":"consumable", "id":"Bad-ID", "item_id":"knife"}], "diagnostic":"lowercase_snake_case"},
+  {"name":"missing_item_id", "entries":[{"type":"consumable", "id":"missing_item_id"}], "diagnostic":"item_id"},
+  {"name":"unknown_item_id", "entries":[{"type":"consumable", "id":"unknown_item", "item_id":"missing"}], "diagnostic":"unknown item ID"},
+  {"name":"wrong_hunger_type", "entries":[{"type":"consumable", "id":"bad_hunger", "item_id":"knife", "hunger_delta":true}], "diagnostic":"hunger_delta"},
+  {"name":"wrong_thirst_type", "entries":[{"type":"consumable", "id":"bad_thirst", "item_id":"knife", "thirst_delta":"-2"}], "diagnostic":"thirst_delta"},
+  {"name":"duplicate_item_mapping", "entries":[{"type":"consumable", "id":"same_one", "item_id":"knife"}, {"type":"consumable", "id":"same_two", "item_id":"knife"}], "diagnostic":"duplicate"},
+  {"name":"duplicate_definition_id", "entries":[{"type":"consumable", "id":"same", "item_id":"knife"}, {"type":"consumable", "id":"same", "item_id":"shirt"}], "diagnostic":"duplicate ID"}
+]

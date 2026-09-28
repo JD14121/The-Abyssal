@@ -84,3 +84,21 @@ selection uses the caller's injected RandomNumberGenerator; fixed seeds make
 tests repeatable. The resolver returns fresh ItemInstances, and callers can use
 ContainerLootPopulator to add all of them atomically to an Inventory. Loot
 profiles are not bound to every Container automatically.
+
+## Consumable Profiles
+
+To make an existing Item usable for hunger/thirst effects:
+
+1. Create or confirm its ordinary `ItemDefinition` under `game/data/items/`.
+2. Add a `ConsumableDefinition` under `game/data/consumables/` with a unique
+   Consumable `id` and an `item_id` referencing that Item.
+3. Set optional finite `hunger_delta` and `thirst_delta` values; omitted fields
+   default to zero. Negative values reduce the need; positive values increase it.
+4. Keep each Item mapped to at most one Consumable profile. Two zero effects are
+   allowed but produce a warning.
+5. Run the Python JSON, ID, reference and content-report tools, then run the
+   Consumable Registry and use-service tests.
+
+Consumable behavior comes from this profile rather than the Item category. The
+current use service consumes one exact Inventory `instance_id`; it does not
+support WorldItems, Container UI, charges or partial use.

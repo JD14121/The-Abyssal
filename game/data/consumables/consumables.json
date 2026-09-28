@@ -1,0 +1,16 @@
+[
+  {
+    "type": "consumable",
+    "id": "consumable_canned_beans",
+    "item_id": "canned_beans",
+    "hunger_delta": -25.0,
+    "thirst_delta": 5.0
+  },
+  {
+    "type": "consumable",
+    "id": "consumable_water_bottle",
+    "item_id": "water_bottle",
+    "hunger_delta": 0.0,
+    "thirst_delta": -35.0
+  }
+]

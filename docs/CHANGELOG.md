@@ -4,6 +4,10 @@
 
 ### Added
 
+- ConsumableDefinition data, item-to-Consumable Registry lookups and Item reference validation
+- Atomic hunger/thirst ConsumableUseService that consumes the exact ItemInstance with rollback diagnostics
+- Consumable Python validation/content reporting, fixtures, tests and development test scene
+
 - Shared GameClock Autoload with scaled logical time, pause and strict runtime-state serialization
 - Independent bounded SurvivalState and Player SurvivalComponent driven by elapsed game time
 - Phase 7 survival debug scene and deterministic GameClock/state/component tests

@@ -141,19 +141,19 @@ in Phase 5. Phase 6 — Loot Foundation follows.
 - **Complete** — per-entity SurvivalState for health, hunger and thirst with bounded values and strict serialization
 - **Complete** — Player SurvivalComponent advances hunger and thirst deterministically from game time
 - **Complete** — test-only survival scene and clock/state/component regression coverage
-- Stamina, food consumption and automatic health changes remain deferred to later phases
+- Stamina and automatic health changes remain deferred to later phases
 
 ---
 
-## Phase 8 - Consumable Foundation
+## Phase 8 - Consumable Foundation (Complete)
 
-- Consumable definitions and item-use validation
-- Food and drink effects applied to SurvivalState
-- Atomic use semantics across Inventory and survival effects
-- Preserve ItemDefinition/ItemInstance separation and deterministic failure handling
+- **Complete** — Consumable definitions, Item references, Registry indexes and static validation
+- **Complete** — hunger/thirst deltas and exact-instance ConsumableUseService
+- **Complete** — atomic Inventory/SurvivalState use with rollback diagnostics
+- **Complete** — Python validator/report support, debug scene and regression tests
 
-This is the recommended next phase to close the first resource-to-survival loop
-before adding creatures.
+No Medicine, Health effects, charges, partial use, stacking, consumption UI or
+persistent effect history was included. Creature/Zombie is the next phase.
 
 ---
 

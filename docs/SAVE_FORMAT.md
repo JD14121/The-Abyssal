@@ -111,6 +111,11 @@ Loot definitions are static data and are not embedded in runtime saves.
 Generated ItemInstances are represented by the existing serialized Inventory
 runtime state; Loot group IDs and roll history are not recorded.
 
+ConsumableDefinitions are also static data and are not embedded in runtime
+records. After a successful use, the consumed ItemInstance is simply absent from
+the serialized Inventory state. No use history, replacement can/bottle, charge
+count or new save format is introduced.
+
 ## Phase 7 Runtime Records
 
 The logical clock exposes a strict in-memory record with exactly

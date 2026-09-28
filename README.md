@@ -87,7 +87,8 @@ python -m unittest discover -s tools/tests -v
 ```
 
 All tools return 0 on success and 1 for content errors. `--data-root PATH`
-selects another data root containing `core/`, `materials/`, `items/` and `loot/`.
+selects another data root containing `core/`, `materials/`, `items/` and `loot/`;
+the four-group manifest also requires `consumables/`.
 The default root is resolved relative to the tools, independent of the working directory.
 The syntax checker scans all JSON recursively. The other three tools validate
 the complete supported schemas, IDs and references before reporting success.
@@ -116,16 +117,19 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' --script res://tests/unit/core/test_game_clock.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/survival/test_survival_state.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/survival/test_survival_component.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/consumables/test_consumable_registry.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/consumables/test_consumable_use_service.gd
+& $godotExecutable --headless --path './game' res://debug/test_scenes/consumable_test.tscn --quit-after 4
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
 as well as its exit code. The second starts the real Autoload and the Player
-Foundation test world. Expected output includes `Materials: 5; Items: 10; Loot: 9`
+Foundation test world. Expected output includes `Materials: 5; Items: 10; Loot: 9; Consumables: 2`
 and `[PlayerFoundation] Test world ready`. Startup terminates with exit code 1
 if data validation fails. The original data-only scene remains available at
 `res://scenes/bootstrap/data_smoke_test.tscn`.
 
-The final fourteen commands run static-data, runtime-item, player, interaction,
+The test commands run static-data, runtime-item, player, interaction,
 Inventory, WorldItem, transfer and Container tests and return nonzero if any check fails. The runtime suite also creates 10,000 live
 instances across two factories to check UUID uniqueness and format.
 Negative cases intentionally emit errors/warnings; the final check summary
@@ -213,6 +217,15 @@ static validation, weighted selection, chance, quantity, seed repeatability,
 capacity rejection and add-failure rollback. Re-population is allowed; this
 development scene does not add Loot UI or automatic world placement.
 
+## Run and Check Consumables
+
+Run `res://debug/test_scenes/consumable_test.tscn`. It creates one canned-bean
+instance, one water bottle and one hammer in the Player Inventory. Press **3**
+to advance an hour, **1** to use the beans, **2** to use the water, or **H** to
+verify a non-consumable is rejected; WASD movement remains available. The debug
+text shows needs, held instance IDs and the last use result. This scene does not
+add a formal use input, Inventory UI or Survival HUD.
+
 ## Development Rules
 
 Read `AGENTS.md` before making significant changes.
@@ -229,11 +242,12 @@ Important principles:
 
 ## Current Development Phase
 
-Phase 6: Loot Foundation
+Phase 8: Consumable Foundation (complete)
 
 Implemented: deterministic JSON loading, typed material/item definitions,
 atomic DataRegistry publication, schema/ID/reference validation, Python tools,
-5 example materials and 10 example items across 6 categories.
+5 example materials and 10 example items across 6 categories. Consumable profiles
+reference Items by ID and contain only hunger/thirst deltas.
 
 Phase 0B adds independent item instances, UUID identities, validated condition
 changes and JSON-compatible serialization/reconstruction. Usage and record
@@ -249,15 +263,17 @@ pickup/drop through PlayerInventoryComponent.
 Phase 5 adds generic atomic Inventory transfer, empty-by-default world Containers
 with independent Inventories, and Player-local Container access. Phase 6 adds
 validated Loot groups, injected-RNG resolution into independent ItemInstances,
-and all-or-nothing capacity-aware Container population. Map placement, search,
-UI and persistence remain deferred.
+and all-or-nothing capacity-aware Container population. Phase 8 adds
+ConsumableDefinition loading and atomic consumption of an exact Inventory item
+instance. Map placement, search, UI and persistence remain deferred.
 
 ## Project Status
 
 Repository initialization, static data, item runtime, player movement,
 interaction, Inventory and WorldItem pickup/drop foundations are implemented.
 Container access, Inventory transfers and the Loot foundation are implemented.
-The Phase 7 GameClock and Player survival foundations are implemented. No
+The Phase 7 GameClock and Player survival foundations and Phase 8 Consumable
+Foundation are implemented. No
 Inventory or Container UI, map-based Loot placement or full save/load is implemented.
 Existing engine settings are preserved; the project uses DataRegistry and GameClock
 Autoloads and the Player Foundation test-world entry scene. See [Data Schema](docs/DATA_SCHEMA.md) and
@@ -270,4 +286,4 @@ The current Godot executables and VS Code shortcut live outside this repository.
 The first-stage empty directories exist locally. Git does not preserve empty
 directories; create them as needed after cloning. No placeholder files are required.
 
-Recommended next phase: Phase 8 - Consumable Foundation.
+Recommended next phase: Phase 9 - Creature / Zombie Foundation.

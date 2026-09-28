@@ -1,12 +1,13 @@
 extends RefCounted
 ## Central schema rules for supported static definition types.
 
-const GROUP_TYPES := {"materials": "material", "items": "item", "loot": "loot"}
+const GROUP_TYPES := {"materials": "material", "items": "item", "loot": "loot", "consumables": "consumable"}
 const COMMON_FIELDS := ["type", "id", "name"]
 const MATERIAL_FIELDS := ["density", "flammable"]
 const ITEM_FIELDS := ["category", "mass", "materials"]
 const LOOT_FIELDS := ["rolls", "entries"]
 const LOOT_ENTRY_FIELDS := ["item_id", "weight", "chance", "min_quantity", "max_quantity"]
+const CONSUMABLE_FIELDS := ["item_id", "hunger_delta", "thirst_delta"]
 
 var errors: Array[String] = []
 var warnings: Array[String] = []
@@ -14,8 +15,9 @@ var _id_pattern := RegEx.create_from_string("^[a-z][a-z0-9_]*$")
 
 
 func validate_load_order(value: Variant, source: String) -> bool:
-	if not value is Dictionary or value.get("groups") != ["materials", "items", "loot"]:
-		errors.append("%s | field groups: expected [materials, items, loot] in dependency order" % source)
+	var supported_orders := [["materials", "items", "loot"], ["materials", "items", "loot", "consumables"]]
+	if not value is Dictionary or value.get("groups") not in supported_orders:
+		errors.append("%s | field groups: expected materials, items, loot, optionally followed by consumables" % source)
 		return false
 	for field in value:
 		if field != "groups":
@@ -33,18 +35,22 @@ func entries(value: Variant, source: String) -> Array:
 
 
 func validate(entry: Variant, expected_type: String, source: String,
-		registered: Dictionary, known_materials: Dictionary) -> bool:
+		registered: Dictionary, known_materials: Dictionary, item_mappings: Dictionary = {}) -> bool:
 	var previous_errors := errors.size()
 	if not entry is Dictionary:
 		errors.append("%s | definition: expected an object" % source)
 		return false
 	var context := "%s | %s:%s" % [source, str(entry.get("type", expected_type)), str(entry.get("id", "<missing>"))]
 	var allowed: Array = []
-	if expected_type == "loot":
+	if expected_type in ["loot", "consumable"]:
 		_required_string(entry, "type", context)
 		_required_string(entry, "id", context)
-		allowed = ["type", "id"] + LOOT_FIELDS
-		_validate_loot(entry, context, known_materials)
+		if expected_type == "loot":
+			allowed = ["type", "id"] + LOOT_FIELDS
+			_validate_loot(entry, context, known_materials)
+		else:
+			allowed = ["type", "id"] + CONSUMABLE_FIELDS
+			_validate_consumable(entry, context, known_materials, item_mappings)
 	else:
 		for field in COMMON_FIELDS:
 			_required_string(entry, field, context)
@@ -78,7 +84,31 @@ func validate(entry: Variant, expected_type: String, source: String,
 	for field in entry:
 		if field not in allowed:
 			warnings.append("%s | field %s: unknown optional field" % [context, field])
+	if expected_type == "consumable" and errors.size() == previous_errors:
+		var hunger_delta: float = float(entry.get("hunger_delta", 0.0))
+		var thirst_delta: float = float(entry.get("thirst_delta", 0.0))
+		if hunger_delta == 0.0 and thirst_delta == 0.0:
+			warnings.append("%s | fields hunger_delta/thirst_delta: Consumable has zero effect" % context)
 	return errors.size() == previous_errors
+
+
+func _validate_consumable(entry: Dictionary, context: String, known_items: Dictionary, item_mappings: Dictionary) -> void:
+	if not entry.has("item_id"):
+		errors.append("%s | field item_id: missing required field" % context)
+	elif not entry.item_id is String or entry.item_id.strip_edges().is_empty():
+		errors.append("%s | field item_id: expected non-empty string" % context)
+	else:
+		var item_id := StringName(entry.item_id)
+		if not known_items.has(item_id):
+			errors.append("%s | field item_id: unknown item ID %s" % [context, entry.item_id])
+		if item_mappings.has(item_id):
+			errors.append("%s | field item_id: Item %s already maps to Consumable defined in %s" % [context, entry.item_id, item_mappings[item_id].source_file])
+	var hunger: Variant = entry.get("hunger_delta", 0.0)
+	var thirst: Variant = entry.get("thirst_delta", 0.0)
+	if not _is_finite_number(hunger):
+		errors.append("%s | field hunger_delta: expected finite number" % context)
+	if not _is_finite_number(thirst):
+		errors.append("%s | field thirst_delta: expected finite number" % context)
 
 
 func _validate_loot(entry: Dictionary, context: String, known_items: Dictionary) -> void:

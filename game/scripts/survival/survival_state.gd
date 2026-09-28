@@ -1,3 +1,4 @@
+class_name SurvivalState
 extends RefCounted
 ## Per-entity needs and health. This value object has no scene or world dependency.
 
@@ -43,6 +44,22 @@ func set_thirst(value: float) -> bool:
 	return true
 
 
+func modify_hunger(delta: float) -> bool:
+	if not _is_finite(delta):
+		return false
+	return set_hunger(_hunger + delta)
+
+
+func modify_thirst(delta: float) -> bool:
+	if not _is_finite(delta):
+		return false
+	return set_thirst(_thirst + delta)
+
+
+func is_valid() -> bool:
+	return _is_valid_current_value(_health) and _is_valid_current_value(_hunger) and _is_valid_current_value(_thirst)
+
+
 func serialize() -> Dictionary:
 	return {"health": _health, "hunger": _hunger, "thirst": _thirst}
 
@@ -69,6 +86,10 @@ func _is_valid_saved_value(value: Variant) -> bool:
 		return false
 	var number := float(value)
 	return _is_finite(number) and number >= MIN_VALUE and number <= MAX_VALUE
+
+
+func _is_valid_current_value(value: float) -> bool:
+	return _is_finite(value) and value >= MIN_VALUE and value <= MAX_VALUE
 
 
 func _is_finite(value: float) -> bool:

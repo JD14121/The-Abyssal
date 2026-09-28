@@ -6,10 +6,13 @@ const Validator = preload("res://scripts/data/data_validator.gd")
 const MaterialData = preload("res://scripts/data/definitions/material_definition.gd")
 const Item = preload("res://scripts/data/definitions/item_definition.gd")
 const Loot = preload("res://scripts/data/definitions/loot_definition.gd")
+const Consumable = preload("res://scripts/data/definitions/consumable_definition.gd")
 
 var _materials: Dictionary[StringName, MaterialData] = {}
 var _items: Dictionary[StringName, Item] = {}
 var _loot: Dictionary[StringName, Loot] = {}
+var _consumables: Dictionary[StringName, Consumable] = {}
+var _consumables_by_item_id: Dictionary[StringName, Consumable] = {}
 var _loaded: bool = false
 var _errors: Array[String] = []
 var _warnings: Array[String] = []
@@ -25,6 +28,8 @@ func load_all_data(data_root: String = "res://data") -> bool:
 	_materials.clear()
 	_items.clear()
 	_loot.clear()
+	_consumables.clear()
+	_consumables_by_item_id.clear()
 	_errors.clear()
 	_warnings.clear()
 	var started := Time.get_ticks_msec()
@@ -33,6 +38,8 @@ func load_all_data(data_root: String = "res://data") -> bool:
 	var pending_materials: Dictionary[StringName, MaterialData] = {}
 	var pending_items: Dictionary[StringName, Item] = {}
 	var pending_loot: Dictionary[StringName, Loot] = {}
+	var pending_consumables: Dictionary[StringName, Consumable] = {}
+	var pending_consumables_by_item_id: Dictionary[StringName, Consumable] = {}
 	print("[DataRegistry] Starting data load: " + data_root)
 	var order_path := data_root.path_join("core/load_order.json")
 	var order: Dictionary = loader.read_json(order_path)
@@ -59,7 +66,10 @@ func load_all_data(data_root: String = "res://data") -> bool:
 						"loot":
 							registered = pending_loot
 							references = pending_items
-					if not validator.validate(entry, Validator.GROUP_TYPES[group], "%s[%d]" % [path, index], registered, references):
+						"consumables":
+							registered = pending_consumables
+							references = pending_items
+					if not validator.validate(entry, Validator.GROUP_TYPES[group], "%s[%d]" % [path, index], registered, references, pending_consumables_by_item_id):
 						continue
 					match group:
 						"materials":
@@ -71,6 +81,10 @@ func load_all_data(data_root: String = "res://data") -> bool:
 						"loot":
 							var loot := Loot.new(entry, path)
 							pending_loot[loot.id] = loot
+						"consumables":
+							var consumable := Consumable.new(entry, path)
+							pending_consumables[consumable.id] = consumable
+							pending_consumables_by_item_id[consumable.item_id] = consumable
 	_errors.append_array(loader.errors)
 	_errors.append_array(validator.errors)
 	_warnings.append_array(validator.warnings)
@@ -84,8 +98,10 @@ func load_all_data(data_root: String = "res://data") -> bool:
 	_materials = pending_materials
 	_items = pending_items
 	_loot = pending_loot
+	_consumables = pending_consumables
+	_consumables_by_item_id = pending_consumables_by_item_id
 	_loaded = true
-	print("[DataRegistry] Ready. Materials: %d; Items: %d; Loot: %d; Files: %d; Errors: 0; Warnings: %d; Duration: %d ms" % [_materials.size(), _items.size(), _loot.size(), loader.file_count, _warnings.size(), Time.get_ticks_msec() - started])
+	print("[DataRegistry] Ready. Materials: %d; Items: %d; Loot: %d; Consumables: %d; Files: %d; Errors: 0; Warnings: %d; Duration: %d ms" % [_materials.size(), _items.size(), _loot.size(), _consumables.size(), loader.file_count, _warnings.size(), Time.get_ticks_msec() - started])
 	return true
 
 
@@ -127,6 +143,22 @@ func get_all_items() -> Array:
 
 func get_all_loot() -> Array:
 	return _loot.values()
+
+
+func get_consumable(id: StringName) -> Consumable:
+	return _consumables.get(id)
+
+
+func has_consumable(id: StringName) -> bool:
+	return _consumables.has(id)
+
+
+func get_all_consumables() -> Array:
+	return _consumables.values()
+
+
+func get_consumable_for_item(item_id: StringName) -> Consumable:
+	return _consumables_by_item_id.get(item_id)
 
 
 func get_errors() -> Array[String]:
