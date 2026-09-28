@@ -4,6 +4,12 @@
 
 ### Added
 
+- WorldItem spatial runtime scene holding an existing ItemInstance reference
+- PlayerInventoryComponent owning the Phase 3 Inventory and identity-preserving pickup/drop APIs
+- Pickup transaction, validated drop setup and same-instance rollback on failure
+- Deterministic WorldItem test scene with inventory count, weight and last-pickup feedback
+- WorldItem ownership, pickup/drop, rollback, round-trip and Area2D interaction tests
+
 - Reusable RefCounted Inventory with instance-ID add/remove/query operations
 - Definition-backed weight, optional capacity and atomic add validation
 - Strict Inventory serialization and ItemFactory-based all-or-nothing restoration

@@ -18,21 +18,21 @@ The project focuses on systemic survival simulation, modular gameplay systems, e
 
 Repository root:
 
-D:\Codex Projects\codex game
+D:\Codex-Projects\codex-game
 
 Godot project:
 
-D:\Codex Projects\codex game\game
+D:\Codex-Projects\codex-game\game
 
 ## Opening the Project
 
 Open the following directory using Godot Project Manager:
 
-D:\Codex Projects\codex game\game
+D:\Codex-Projects\codex-game\game
 
 Open the repository root in VS Code / Codex:
 
-D:\Codex Projects\codex game
+D:\Codex-Projects\codex-game
 
 ## Repository Structure
 
@@ -106,6 +106,8 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' --script res://tests/unit/interaction/test_interaction_integration.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/inventory/test_inventory_foundation.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/inventory/test_inventory_stress.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/items/test_world_item_foundation.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/interaction/test_world_item_integration.gd
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
@@ -115,8 +117,8 @@ and `[PlayerFoundation] Test world ready`. Startup terminates with exit code 1
 if data validation fails. The original data-only scene remains available at
 `res://scenes/bootstrap/data_smoke_test.tscn`.
 
-The final seven commands run static-data, runtime-item, player, interaction and Inventory tests and
-return nonzero if any check fails. The runtime suite also creates 10,000 live
+The final nine commands run static-data, runtime-item, player, interaction,
+Inventory and WorldItem tests and return nonzero if any check fails. The runtime suite also creates 10,000 live
 instances across two factories to check UUID uniqueness and format.
 Negative cases intentionally emit errors/warnings; the final check summary
 distinguishes expected rejections from test failures. Tests use isolated temporary
@@ -162,6 +164,20 @@ Walk within 96 pixels of the orange test objects; the nearest eligible object is
 the current target. Press E to print one interaction message. The component
 exposes the target prompt API, but no interaction HUD is included.
 
+## Run and Check World Item Foundation
+
+Run the dedicated pickup scene:
+
+```powershell
+& $godotExecutable --path './game' res://debug/test_scenes/world_item_test.tscn
+```
+
+Move next to either yellow item and press E. The debug label reports Inventory
+count, total weight and the last picked-up instance ID. The scene has two fixed
+items for nearest-target and candidate-cleanup checks; it has no drop input or
+Inventory UI. The two Phase 4 test scripts are listed with the Godot regression
+commands above.
+
 ## Development Rules
 
 Read `AGENTS.md` before making significant changes.
@@ -178,7 +194,7 @@ Important principles:
 
 ## Current Development Phase
 
-Phase 3: Inventory Foundation
+Phase 4: World Item and Pickup/Drop Foundation
 
 Implemented: deterministic JSON loading, typed material/item definitions,
 atomic DataRegistry publication, schema/ID/reference validation, Python tools,
@@ -192,14 +208,15 @@ contracts are in [Architecture](docs/ARCHITECTURE.md) and
 Phase 2 adds a generic Interactable contract, proximity targeting and a debug
 interaction pipeline. Phase 3 adds a reusable Inventory runtime object that
 holds ItemInstances, calculates definition-backed weight and supports strict
-in-memory serialization. World-item pickup, containers, combat and survival are
-not implemented.
+in-memory serialization. Phase 4 adds spatial WorldItems and identity-preserving
+pickup/drop through PlayerInventoryComponent. Containers, loot, UI and persistence
+remain deferred.
 
 ## Project Status
 
 Repository initialization, static data, item runtime, player movement,
-interaction and Inventory foundations are implemented. World-item pickup and
-full save/load are not implemented.
+interaction, Inventory and WorldItem pickup/drop foundations are implemented.
+No Inventory UI, Container gameplay or full save/load is implemented.
 Existing engine settings are preserved; the project uses the DataRegistry Autoload
 and the Player Foundation test-world entry scene. See [Data Schema](docs/DATA_SCHEMA.md) and
 [Architecture](docs/ARCHITECTURE.md) for the current contract.
@@ -211,4 +228,4 @@ The current Godot executables and VS Code shortcut live outside this repository.
 The first-stage empty directories exist locally. Git does not preserve empty
 directories; create them as needed after cloning. No placeholder files are required.
 
-Next task, to be authorized separately: Phase 4 - World Item and Pickup/Drop Foundation.
+Next phase, specified separately: Phase 5 - Container Foundation.

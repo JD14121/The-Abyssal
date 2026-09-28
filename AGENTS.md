@@ -8,11 +8,11 @@ The project takes architectural inspiration from systemic survival games such as
 
 The repository root is:
 
-D:\Codex Projects\codex game
+D:\Codex-Projects\codex-game
 
 The Godot project root is:
 
-D:\Codex Projects\codex game\game
+D:\Codex-Projects\codex-game\game
 
 Godot runtime files belong under `game/`.
 

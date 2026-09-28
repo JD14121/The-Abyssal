@@ -6,8 +6,10 @@ The diagram below describes the long-term architecture. Phase 0 implements the
 static data foundation and its minimal startup verification scene. Phase 0B adds
 item runtime records, creation and record serialization. Phase 1 adds a locally
 controlled 2D player and a collision test world; Phase 2 adds local interaction;
-Phase 3 adds a standalone Inventory runtime container. These systems remain
-separate: Inventory does not depend on Player, World, Interaction or UI.
+Phase 3 adds a standalone Inventory runtime container. Phase 4 connects it to a
+spatial WorldItem through identity-preserving Player pickup/drop transactions.
+Inventory itself remains separate: it does not depend on Player, World,
+Interaction or UI.
 
 Gameplay Data
 -> Data Registry
@@ -415,3 +417,46 @@ formal HUD; prompt access and DebugInteractable console feedback support testing
 `game/debug/test_scenes/interaction_test.tscn` is separate from the Phase 1
 movement yard and demonstrates two targets plus world collision. Automated
 checks are in `game/tests/unit/interaction/`.
+
+## Implemented World Item and Transfer Foundation (Phase 4)
+
+```text
+ItemFactory -> ItemInstance
+                   ↕ same reference
+       WorldItem <-> Inventory
+            ↑           ↑
+            └─ PlayerInventoryComponent ─ Player interaction request
+```
+
+`game/scripts/items/world_item.gd` is a spatial runtime holder of one
+`ItemInstance`, not a second representation of item state. It neither creates
+instances nor copies `ItemDefinition` fields. Initialization is single-use;
+`take_item()` releases the same reference and makes the WorldItem ineligible for
+interaction. An empty or invalid WorldItem cannot be picked up.
+
+`PlayerInventoryComponent` owns a Phase 3 `Inventory`, creates it from the
+DataRegistry at node readiness, and provides `try_pickup_world_item()` and
+`drop_item(instance_id, world_parent, world_position)`. The Player controller
+only forwards the generic pickup contract from Interactable to this component;
+the InteractionComponent remains unaware of WorldItem behavior.
+
+Pickup adds the current reference to Inventory first. Only after add succeeds
+does the WorldItem release the reference and queue itself for deletion. A failed
+add leaves the WorldItem and Inventory unchanged. Drop validates the requested
+instance, parent and PackedScene, creates an empty WorldItem, removes the item,
+then binds the same reference and attaches it at the caller-provided world
+position. If setup fails after removal, it re-adds that same reference; rollback
+failure is reported with `push_error`.
+
+Both directions preserve `instance_id`, `definition_id` and `condition`; no new
+UUID or ItemInstance is produced during transfer. There is no global ownership
+registry, so Phase 3's documented duplicate-reference possibility across
+separate Inventories remains until a later atomic cross-inventory transfer phase.
+The component owns only the Player Inventory; no Inventory UI, drop input,
+Container, Loot, stacking, item use or world persistence is included.
+
+`game/debug/test_scenes/world_item_test.tscn` deterministically spawns two
+placeholder WorldItems and displays Inventory count, total weight and the last
+picked-up instance ID. Unit and integration tests exercise reference identity,
+capacity rejection, duplicate IDs, drop setup failures, rollback, round-trip
+weight and real Area2D/E-key target cleanup.

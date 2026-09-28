@@ -13,3 +13,10 @@ func _physics_process(_delta: float) -> void:
 
 static func calculate_velocity(direction: Vector2, speed: float) -> Vector2:
 	return direction.limit_length(1.0) * maxf(speed, 0.0)
+
+
+func try_pickup_world_item(world_item: Variant) -> bool:
+	var inventory_component := get_node_or_null("PlayerInventoryComponent")
+	if inventory_component == null:
+		return false
+	return inventory_component.try_pickup_world_item(world_item)

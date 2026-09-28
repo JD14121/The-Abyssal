@@ -92,16 +92,22 @@ interactions, line of sight, final HUD and interaction manager were deferred.
 - Unit, invalid-data, round-trip and 1000-instance stress coverage
 
 No WorldItem, pickup/drop, Container, Loot, UI, equipment, stacking or disk save
-system is included. Recommended next: Phase 4 - World Item and Pickup/Drop
-Foundation.
+system was included in Phase 3. Phase 4 follows below.
 
 ---
 
-## Phase 4 - World Item and Pickup/Drop Foundation
+## Phase 4 - World Item and Pickup/Drop Foundation (Complete)
 
-- WorldItem owns a runtime ItemInstance reference
-- interaction-driven pickup into Inventory
-- drop from Inventory into the world
+- WorldItem scene holds one existing ItemInstance without copying its definition state
+- PlayerInventoryComponent owns the Phase 3 Inventory and exposes narrow transfer APIs
+- interaction-driven pickup and Inventory-to-world drop preserve ItemInstance identity
+- pickup/drop failures preserve holder state; post-removal drop failures restore the same instance
+- deterministic two-item test scene and real Area2D/E-key integration coverage
+- unit, transfer, rollback, round-trip and prior-phase regression suites
+
+At the end of Phase 4, Inventory UI, user-facing drop input, containers, loot,
+stacking, item use, and world persistence remain deferred. Recommended next:
+Phase 5 - Container Foundation.
 
 ---
 
