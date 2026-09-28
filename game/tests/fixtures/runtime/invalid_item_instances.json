@@ -1,0 +1,20 @@
+[
+  {"name": "missing_instance_id", "data": {"definition_id": "kitchen_knife", "condition": 1.0}, "field": "instance_id"},
+  {"name": "missing_definition_id", "data": {"instance_id": "restore_a", "condition": 1.0}, "field": "definition_id"},
+  {"name": "missing_condition", "data": {"instance_id": "restore_a", "definition_id": "kitchen_knife"}, "field": "condition"},
+  {"name": "empty_instance_id", "data": {"instance_id": "  ", "definition_id": "kitchen_knife", "condition": 1.0}, "field": "instance_id"},
+  {"name": "numeric_instance_id", "data": {"instance_id": 42, "definition_id": "kitchen_knife", "condition": 1.0}, "field": "instance_id"},
+  {"name": "identity_is_definition", "data": {"instance_id": "kitchen_knife", "definition_id": "kitchen_knife", "condition": 1.0}, "field": "instance_id"},
+  {"name": "unknown_definition", "data": {"instance_id": "restore_a", "definition_id": "removed_item", "condition": 0.8}, "field": "definition_id"},
+  {"name": "invalid_definition_format", "data": {"instance_id": "restore_a", "definition_id": "Kitchen Knife", "condition": 1.0}, "field": "definition_id"},
+  {"name": "non_string_definition", "data": {"instance_id": "restore_a", "definition_id": 1, "condition": 1.0}, "field": "definition_id"},
+  {"name": "negative_condition", "data": {"instance_id": "restore_a", "definition_id": "kitchen_knife", "condition": -0.1}, "field": "condition"},
+  {"name": "over_one_condition", "data": {"instance_id": "restore_a", "definition_id": "kitchen_knife", "condition": 1.1}, "field": "condition"},
+  {"name": "string_condition", "data": {"instance_id": "restore_a", "definition_id": "kitchen_knife", "condition": "good"}, "field": "condition"},
+  {"name": "boolean_condition", "data": {"instance_id": "restore_a", "definition_id": "kitchen_knife", "condition": true}, "field": "condition"},
+  {"name": "null_condition", "data": {"instance_id": "restore_a", "definition_id": "kitchen_knife", "condition": null}, "field": "condition"},
+  {"name": "unknown_field", "data": {"instance_id": "restore_a", "definition_id": "kitchen_knife", "condition": 1.0, "mass": 0.25}, "field": "mass"},
+  {"name": "unsupported_version", "data": {"instance_id": "restore_a", "definition_id": "kitchen_knife", "condition": 1.0, "version": 2}, "field": "version"},
+  {"name": "null_root", "data": null, "field": "root"},
+  {"name": "array_root", "data": [], "field": "root"}
+]

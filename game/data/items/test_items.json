@@ -1,0 +1,12 @@
+[
+  {"type": "item", "id": "kitchen_knife", "name": "Kitchen Knife", "category": "weapon", "mass": 0.25, "materials": ["steel", "plastic"]},
+  {"type": "item", "id": "wooden_board", "name": "Wooden Board", "category": "misc", "mass": 1.2, "materials": ["wood"]},
+  {"type": "item", "id": "water_bottle", "name": "Water Bottle", "category": "food", "mass": 0.55, "materials": ["plastic"]},
+  {"type": "item", "id": "canned_beans", "name": "Canned Beans", "category": "food", "mass": 0.45, "materials": ["steel"]},
+  {"type": "item", "id": "clean_bandage", "name": "Clean Bandage", "category": "medicine", "mass": 0.03, "materials": ["cloth"]},
+  {"type": "item", "id": "hammer", "name": "Hammer", "category": "tool", "mass": 0.7, "materials": ["steel", "wood"]},
+  {"type": "item", "id": "flashlight", "name": "Flashlight", "category": "tool", "mass": 0.2, "materials": ["plastic", "glass", "steel"]},
+  {"type": "item", "id": "cotton_shirt", "name": "Cotton Shirt", "category": "clothing", "mass": 0.18, "materials": ["cloth"]},
+  {"type": "item", "id": "glass_bottle", "name": "Glass Bottle", "category": "misc", "mass": 0.3, "materials": ["glass"]},
+  {"type": "item", "id": "scrap_metal", "name": "Scrap Metal", "category": "misc", "mass": 0.5, "materials": ["steel"]}
+]

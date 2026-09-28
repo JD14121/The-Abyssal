@@ -1,0 +1,83 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1"]
+[ext_resource type="Script" path="res://scripts/world/test_world.gd" id="2"]
+
+[sub_resource type="RectangleShape2D" id="HorizontalBoundary"]
+size = Vector2(1600, 32)
+
+[sub_resource type="RectangleShape2D" id="VerticalBoundary"]
+size = Vector2(32, 936)
+
+[sub_resource type="RectangleShape2D" id="TallObstacle"]
+size = Vector2(160, 240)
+
+[sub_resource type="RectangleShape2D" id="WideObstacle"]
+size = Vector2(320, 64)
+
+[sub_resource type="RectangleShape2D" id="SquareObstacle"]
+size = Vector2(96, 96)
+
+[node name="TestWorld" type="Node2D"]
+script = ExtResource("2")
+
+[node name="Geometry" type="Node2D" parent="."]
+
+[node name="TopBoundary" type="StaticBody2D" parent="Geometry"]
+position = Vector2(800, 16)
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/TopBoundary"]
+shape = SubResource("HorizontalBoundary")
+
+[node name="BottomBoundary" type="StaticBody2D" parent="Geometry"]
+position = Vector2(800, 984)
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/BottomBoundary"]
+shape = SubResource("HorizontalBoundary")
+
+[node name="LeftBoundary" type="StaticBody2D" parent="Geometry"]
+position = Vector2(16, 500)
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/LeftBoundary"]
+shape = SubResource("VerticalBoundary")
+
+[node name="RightBoundary" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1584, 500)
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/RightBoundary"]
+shape = SubResource("VerticalBoundary")
+
+[node name="TallObstacle" type="StaticBody2D" parent="Geometry"]
+position = Vector2(900, 480)
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/TallObstacle"]
+shape = SubResource("TallObstacle")
+
+[node name="WideObstacle" type="StaticBody2D" parent="Geometry"]
+position = Vector2(440, 760)
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/WideObstacle"]
+shape = SubResource("WideObstacle")
+
+[node name="SquareObstacle" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1250, 720)
+collision_layer = 1
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/SquareObstacle"]
+shape = SubResource("SquareObstacle")
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(480, 360)

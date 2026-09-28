@@ -1,0 +1,8 @@
+[
+  {"name": "trailing_comma", "text": "[{\"type\":\"item\",\"id\":\"extra\",\"name\":\"Extra\",\"category\":\"misc\"},]"},
+  {"name": "unescaped_newline", "text": "{\"type\":\"item\",\"id\":\"extra\",\"name\":\"Line\nBreak\",\"category\":\"misc\"}"},
+  {"name": "leading_zero", "text": "{\"type\":\"item\",\"id\":\"extra\",\"name\":\"Extra\",\"category\":\"misc\",\"mass\":01}"},
+  {"name": "trailing_content", "text": "[] []"},
+  {"name": "invalid_escape", "text": "{\"type\":\"material\",\"id\":\"extra\",\"name\":\"Bad\\q\"}"},
+  {"name": "overflow_number", "text": "{\"type\":\"item\",\"id\":\"extra\",\"name\":\"Extra\",\"category\":\"misc\",\"mass\":1e999}"}
+]

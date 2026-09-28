@@ -1,0 +1,21 @@
+[
+  {"name": "duplicate_item", "group": "items", "entries": [{"type": "item", "id": "knife", "name": "Duplicate", "category": "misc"}], "diagnostic": "duplicate"},
+  {"name": "duplicate_material", "group": "materials", "entries": [{"type": "material", "id": "steel", "name": "Duplicate"}], "diagnostic": "duplicate"},
+  {"name": "invalid_id", "group": "items", "entries": [{"type": "item", "id": "Kitchen Knife", "name": "Knife", "category": "weapon"}], "diagnostic": "id"},
+  {"name": "missing_id", "group": "items", "entries": [{"type": "item", "name": "Knife", "category": "weapon"}], "diagnostic": "id"},
+  {"name": "missing_field", "group": "items", "entries": [{"type": "item", "id": "bad", "name": "Knife"}], "diagnostic": "category"},
+  {"name": "invalid_type", "group": "items", "entries": [{"type": "item", "id": "bad", "name": "Knife", "category": "weapon", "mass": "heavy"}], "diagnostic": "mass"},
+  {"name": "boolean_mass", "group": "items", "entries": [{"type": "item", "id": "bad", "name": "Knife", "category": "weapon", "mass": true}], "diagnostic": "mass"},
+  {"name": "negative_mass", "group": "items", "entries": [{"type": "item", "id": "bad", "name": "Knife", "category": "weapon", "mass": -1}], "diagnostic": "mass"},
+  {"name": "broken_reference", "group": "items", "entries": [{"type": "item", "id": "bad", "name": "Knife", "category": "weapon", "materials": ["nonexistent_material"]}], "diagnostic": "nonexistent_material"},
+  {"name": "reference_type", "group": "items", "entries": [{"type": "item", "id": "bad", "name": "Knife", "category": "weapon", "materials": [1]}], "diagnostic": "materials"},
+  {"name": "materials_type", "group": "items", "entries": [{"type": "item", "id": "bad", "name": "Knife", "category": "weapon", "materials": "steel"}], "diagnostic": "materials"},
+  {"name": "empty_name", "group": "materials", "entries": [{"type": "material", "id": "bad", "name": "  "}], "diagnostic": "name"},
+  {"name": "density_type", "group": "materials", "entries": [{"type": "material", "id": "bad", "name": "Bad", "density": true}], "diagnostic": "density"},
+  {"name": "negative_density", "group": "materials", "entries": [{"type": "material", "id": "bad", "name": "Bad", "density": -1}], "diagnostic": "density"},
+  {"name": "flammable_type", "group": "materials", "entries": [{"type": "material", "id": "bad", "name": "Bad", "flammable": 1}], "diagnostic": "flammable"},
+  {"name": "unknown_type", "group": "items", "entries": [{"type": "creature", "id": "bad", "name": "Bad"}], "diagnostic": "type"},
+  {"name": "wrong_group", "group": "items", "entries": [{"type": "material", "id": "bad", "name": "Bad"}], "diagnostic": "type"},
+  {"name": "non_object", "group": "items", "entries": [42], "diagnostic": "object"},
+  {"name": "null_root", "group": "items", "entries": null, "diagnostic": "root"}
+]

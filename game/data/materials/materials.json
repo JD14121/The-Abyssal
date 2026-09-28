@@ -1,0 +1,7 @@
+[
+  {"type": "material", "id": "steel", "name": "Steel", "density": 7.85, "flammable": false},
+  {"type": "material", "id": "plastic", "name": "Plastic", "density": 0.95, "flammable": true},
+  {"type": "material", "id": "wood", "name": "Wood", "density": 0.65, "flammable": true},
+  {"type": "material", "id": "glass", "name": "Glass", "density": 2.5, "flammable": false},
+  {"type": "material", "id": "cloth", "name": "Cloth", "density": 0.3, "flammable": true}
+]

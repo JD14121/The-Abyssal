@@ -1,0 +1,417 @@
+# Architecture
+
+## High-Level Architecture
+
+The diagram below describes the long-term architecture. Phase 0 implements the
+static data foundation and its minimal startup verification scene. Phase 0B adds
+item runtime records, creation and record serialization. Phase 1 adds a locally
+controlled 2D player and a collision test world; Phase 2 adds local interaction;
+Phase 3 adds a standalone Inventory runtime container. These systems remain
+separate: Inventory does not depend on Player, World, Interaction or UI.
+
+Gameplay Data
+-> Data Registry
+-> Simulation Systems
+-> Runtime Entities
+-> Scenes
+-> UI
+
+Persistence operates alongside runtime entities and simulation systems.
+
+## Main Layers
+
+### Data
+
+Contains static definitions.
+
+Examples:
+
+- materials
+- items
+- creatures
+- loot tables
+- recipes
+- skills
+
+### Simulation
+
+Contains gameplay rules.
+
+Examples:
+
+- survival
+- combat
+- time
+- damage
+- noise
+- decay
+
+### Runtime Entities
+
+Contains stateful game instances.
+
+Examples:
+
+- player
+- zombie
+- item instance
+- container
+- world object
+
+### Presentation
+
+Contains Godot scenes, graphics, animations, and audio.
+
+### UI
+
+Displays information and receives user interaction.
+
+### Persistence
+
+Serializes runtime state into stable save data.
+
+## Important Separation
+
+Static definitions must not contain per-instance state.
+
+Example:
+
+ItemDefinition:
+
+kitchen_knife
+mass = 0.25
+base_damage = 8
+
+ItemInstance:
+
+definition_id = kitchen_knife
+condition = 0.72
+bloodied = true
+
+## Composition
+
+Gameplay entities should prefer reusable components.
+
+Example Player:
+
+Player
+- Movement
+- Interaction
+- Inventory
+- Survival
+- Health
+- Combat
+- Equipment
+
+Avoid deep inheritance chains.
+
+## Globals
+
+Autoload singletons should be limited to systems that truly require global lifetime.
+
+Possible future singletons:
+
+- Game
+- DataRegistry
+- GameClock
+- EventBus
+- SaveManager
+
+Do not automatically create Manager singletons for each gameplay system.
+
+## Implemented Data Foundation
+
+`game/scripts/data/data_loader.gd` handles recursive sorted JSON discovery,
+file reads, JSON syntax checking and source paths. A small lexical check rejects
+permissive Godot JSON extensions before the engine parser handles structural
+grammar and conversion.
+
+`game/scripts/data/data_validator.gd` owns manifest, schema, ID, duplicate and
+reference rules. It collects errors and unknown-field warnings with source and
+field context. The only current types are material and item.
+
+`game/scripts/data/definitions/` contains typed `RefCounted` definitions. These
+represent shared static data and carry their source file for diagnostics.
+
+`game/autoload/data_registry.gd` is registered as the `DataRegistry` Autoload.
+Its `_ready()` loads materials before items. It builds temporary dictionaries,
+publishes both only after all validation succeeds, and provides dictionary-based
+O(1) ID lookup. Failed initial loads and reloads leave it unloaded and empty;
+callers cannot accidentally query partially loaded or stale data. Loading is
+synchronous, and the startup scene runs after Autoload initialization.
+
+### Query API
+
+```gdscript
+func load_all_data(data_root: String = "res://data") -> bool
+func is_loaded() -> bool
+func get_material(id: StringName) -> MaterialDefinition
+func has_material(id: StringName) -> bool
+func get_item(id: StringName) -> ItemDefinition
+func has_item(id: StringName) -> bool
+func get_all_materials() -> Array
+func get_all_items() -> Array
+func get_errors() -> Array[String]
+func get_warnings() -> Array[String]
+```
+
+Missing IDs return `null` or `false`. All-definition lists and diagnostic arrays
+are returned as separate arrays; altering list membership does not alter the
+registry. Definition objects remain shared and must be treated as read-only.
+List order follows deterministic registration order, not alphabetical ID order.
+Reloading replaces the definitions; consumers must not retain old references
+across a reload.
+
+```gdscript
+if DataRegistry.is_loaded():
+    var knife = DataRegistry.get_item(&"kitchen_knife")
+    if knife != null:
+        print(knife.name, knife.mass)
+```
+
+`game/scenes/bootstrap/data_smoke_test.tscn` is the preserved data-only check scene.
+It verifies the loaded state and exits with code 1 on failure. It contains no UI
+or gameplay and remains an empty scene after successful startup.
+
+### Offline Validation and Tests
+
+The four Python entry points share `tools/data_utils.py` and use only the standard
+library. The JSON tool checks syntax recursively; the ID/reference/report commands
+all enforce the complete current schema before returning success. Schema rules
+exist in both Python and GDScript, so changes must update both implementations
+and the shared fixture cases under `game/tests/fixtures/data/`.
+
+Python `unittest` exercises real CLI exit codes and diagnostics against temporary
+data roots. The standalone Godot test script exercises the actual registry,
+failure state, recovery, lookup APIs, deterministic scans and generated bulk data.
+It uses `user://` temporary fixtures and never changes production content.
+
+Export packaging is outside this phase. When adding export presets, explicitly
+include runtime JSON files and exclude regression-test fixtures, then verify the
+same loading contract in the exported build.
+
+## Implemented Item Runtime Foundation (Phase 0B)
+
+```text
+Static JSON -> ItemDefinition -> DataRegistry
+                                    |
+                               ItemFactory
+                                    |
+                               ItemInstance
+                                    |
+                          Serializable Dictionary
+```
+
+`game/scripts/items/item_instance.gd` is a `RefCounted` runtime data object, not a
+scene node. It exposes a read-only `instance_id: String`, a read-only
+`definition_id: StringName`, and a mutable `condition: float` (default `1.0`).
+Instance identity and Definition identity are distinct. It neither copies static
+fields nor modifies shared definitions.
+
+`game/scripts/items/item_factory.gd` is an ordinary `RefCounted` factory created
+with the existing DataRegistry. It is not an Autoload and has no global runtime
+object tracker. It uses the existing lookup and ready-state APIs unchanged.
+Runtime validation is kept in `item_instance_validator.gd`, separate from the
+Phase 0 static schemas and Python tools.
+
+```gdscript
+var factory := ItemFactory.new(DataRegistry)
+var knife := factory.create(&"kitchen_knife")
+if knife != null:
+    knife.set_condition(0.73)
+    var definition = knife.get_definition()
+    var record := knife.serialize()
+    var restored := factory.deserialize(record)
+```
+
+### Runtime API and Failure Behavior
+
+Factory API:
+
+```gdscript
+func create(definition_id: StringName) -> ItemInstance
+func create_with_condition(definition_id: StringName, initial_condition: Variant) -> ItemInstance
+func deserialize(data: Variant) -> ItemInstance
+func get_errors() -> Array[String]
+```
+
+Factories reject absent/unready registries, unknown item IDs and invalid runtime
+state. Failure returns `null`, emits `[ItemFactory]` errors and exposes a copied
+diagnostic array. Each operation replaces the previous diagnostics. The Variant
+boundary lets invalid serialized types fail explicitly before any coercion.
+
+Instance API:
+
+```gdscript
+func get_definition() -> ItemDefinition
+func is_valid() -> bool
+func set_condition(value: Variant) -> bool
+func serialize() -> Dictionary
+```
+
+Use the factory to create validated objects. `set_condition()` accepts finite
+numbers from 0 through 1 and returns false without changing state for bad values,
+including booleans, strings, null and non-finite numbers. Assignment to the typed
+`condition` property also passes through range/finite validation; use the method
+at untyped boundaries to prevent GDScript argument coercion. A zero condition has
+no gameplay behavior yet. Public identity setters reject reassignment.
+
+Factory and instances keep weak references to the supplied registry. Definitions
+are looked up dynamically, so the instance sees the current definition after a
+reload rather than a cached old object. If the registry is freed, unready or no
+longer contains the ID, `get_definition()` returns null and `is_valid()` is false.
+Serializing an invalid instance emits `[ItemInstance]` errors and returns `{}`.
+Reloading valid definitions can restore validity without changing instance IDs.
+
+### Identity and Ownership
+
+New creation uses 16 cryptographically random bytes from Godot's built-in Crypto,
+with UUID v4 version and variant bits. IDs are lowercase hyphenated strings and
+do not use object IDs, addresses, array indices or timestamps. Restoration keeps
+the supplied non-empty ID exactly; it never regenerates one.
+
+Two new instances of one definition share the same static object but have
+independent runtime state and different UUIDs. Restoring the same serialized ID
+twice is allowed at this record boundary: future world/save ownership must detect
+duplicate live identities. No global runtime registry or collision database is
+introduced. UUID uniqueness is probabilistic; the 10,000-instance regression
+check detects implementation mistakes, not a mathematical impossibility of collision.
+
+The factory does not retain created instances. Their lifetime follows normal
+RefCounted ownership. At Phase 0B completion, Inventory, WorldItem, equipment,
+combat, SaveManager and filesystem save I/O were deferred.
+
+The three-field serialization contract, strict reconstruction rules and future
+versioning boundary are documented in [SAVE_FORMAT.md](SAVE_FORMAT.md).
+
+## Implemented Inventory Foundation (Phase 3)
+
+```text
+ItemDefinition -> DataRegistry
+       ↓
+ItemFactory -> ItemInstance -> Inventory
+                                  ├─ add / remove / query by instance_id
+                                  ├─ live weight from ItemDefinition.mass
+                                  └─ JSON-compatible runtime state
+```
+
+`game/scripts/inventory/inventory.gd` is a reusable `RefCounted` data container.
+It retains the supplied `ItemInstance` references in insertion order and keeps
+an index by `instance_id`; multiple instances of one definition remain distinct.
+The constructor receives the registry and an optional `max_weight` (zero means
+unlimited). Add validates the instance, identity, current definition and capacity
+before mutating. Weight is recalculated from current definitions without a cache.
+The small capacity comparison tolerance is `0.000001` kg to allow exact-limit
+items through floating-point summation.
+
+Its core API is `add_item`, `remove_item(instance_id)`, `has_item`, `get_item`,
+`get_all_items`, `get_item_count` and `get_total_weight`. Removal returns the
+removed reference or `null`; add/restore failures return `false`, serialization
+failures return `{}`, and `get_errors()` provides copied diagnostics. A weight
+calculation failure returns `NAN` instead of silently treating a missing
+definition as zero mass.
+
+`serialize()` writes `max_weight` and the nested records returned by each
+`ItemInstance.serialize()`. `deserialize(data, item_factory)` strictly validates
+the top-level shape, delegates item records to `ItemFactory.deserialize()`,
+rejects repeated IDs and capacity overflow, and publishes the rebuilt state only
+after every record succeeds. Failed restoration leaves the Inventory's previous
+contents unchanged. The inventory record has no version field; versioning is
+deferred until a persistent save format exists. No Player, World, Interaction,
+UI, Autoload or file I/O dependency is added.
+
+## Implemented Player Foundation (Phase 1)
+
+```text
+Input Map -> Player Controller -> Desired Velocity -> move_and_slide()
+                  |
+          Player (CharacterBody2D)
+          + Visual (Polygon2D)
+          + CollisionShape2D
+          + Camera2D
+```
+
+`game/scenes/player/player.tscn` is reusable independently of any map. Its single
+controller script, `game/scripts/player/player_controller.gd`, reads Input Map
+actions in `_physics_process()` and drives CharacterBody2D velocity in pixels/s.
+`Input.get_vector()` combines opposing directions and limits diagonal magnitude;
+the pure `calculate_velocity(direction, speed)` helper also limits input magnitude
+to one while retaining analog input strength. `move_speed` is an exported local
+configuration value, default 220 pixels/s. Velocity is not multiplied by delta
+again: CharacterBody2D applies the physics timestep in `move_and_slide()`.
+
+There is no acceleration, friction, sprinting, direct position stepping, terrain
+modifier or isometric coordinate transform. No input sets velocity to zero on
+the next physics tick. The controller has no world-root paths, ItemFactory calls,
+inventory, interaction, survival, combat or persistence responsibilities.
+
+### Input, Collision and Camera
+
+`move_up/down/left/right` bind physical W/S/A/D and the corresponding arrow keys
+in `project.godot`. The controller itself uses action names, not physical keys.
+
+Only two physics layers are named: layer 1 World and layer 2 Player. Static world
+bodies use layer 1 / mask 2; the player uses layer 2 / mask 1. The player's
+RectangleShape2D is 32x32 and matches its turquoise Polygon2D. Motion mode is
+floating for top-down motion and sliding against all surfaces, without a floor
+or gravity model. Walls are real StaticBody2D collision, not position clamps.
+
+The player's child Camera2D is the only camera in the test world, enabled with
+no smoothing. It follows the player's center without zoom controls, shake, look
+ahead or effects. It has no map limits; physical world boundaries prevent the
+player leaving the test yard. Some outside background is visible near map edges.
+
+### Development Test World and Startup
+
+`game/scenes/world/test_world.tscn` is the current project entry point. It instances
+the Player at `(480, 360)` in a 1600x1000 test yard with four 32-pixel-thick outside
+walls and three interior rectangular obstacles. All collision positions and
+shapes are authored in the scene. `game/scripts/world/test_world.gd` draws a static
+grid and placeholder wall rectangles from these shapes so surfaces match their
+collision dimensions. This is not map generation or a TileMap system.
+
+DataRegistry still initializes as an Autoload first. The test-world root checks
+its ready state and exits with code 1 if static data failed to load. This startup
+check is separate from the Player controller. The original data-only smoke scene
+is retained unchanged. Input Map, layer names and main-scene selection are the
+only Phase 1 changes to project settings; renderer, physics and stretch settings
+are preserved.
+
+`game/tests/unit/player/test_player_foundation.gd` exercises the pure calculation,
+actual key/action mappings and an instantiated physics world. It verifies cardinal
+and diagonal movement, opposing input, release-to-stop, configuration, distance
+at 60/120 physics ticks, every boundary and obstacle, wall sliding, going around
+corners and the active camera's screen center. Tests reposition the player only
+to arrange scenarios; production movement always uses `move_and_slide()`.
+The suite can capture the rendered viewport with `-- --capture` in a graphical
+run. Manual acceptance steps and run commands are in README.
+
+## Implemented Interaction Foundation (Phase 2)
+
+```text
+Player CharacterBody2D
+└─ InteractionComponent (Area2D, layer 0 / mask Interactable)
+   └─ CircleShape2D (interaction_range)
+        ⇅ detects
+Interactable (Area2D, layer Interactable / mask 0)
+   └─ can_interact / interact / get_interaction_prompt
+```
+
+`game/scripts/interaction/interactable.gd` is a small Area2D base contract.
+The interaction target is a distinct Area2D and does not have to be the physical
+root of a world object; a future StaticBody2D or CharacterBody2D can own an
+Interactable child component. `InteractionComponent` stores unique candidates,
+prunes freed nodes, filters them through `can_interact(interactor)` and selects
+the closest target by squared global distance. Equal distances retain candidate
+discovery order, giving deterministic selection without priorities. It exposes
+the current target and prompt API, and calls `interact()` locally on a single
+Input Map `interact` press. Only this component reads the action.
+
+The exported `interaction_range` value is the sole radius setting and updates
+the component's CircleShape2D. Detection uses physics overlap on collision layer
+3, independently of the Player's layer 2 body collision. No line-of-sight check
+is performed, so an in-range target may be selected through a wall. There is no
+formal HUD; prompt access and DebugInteractable console feedback support testing.
+`game/debug/test_scenes/interaction_test.tscn` is separate from the Phase 1
+movement yard and demonstrates two targets plus world collision. Automated
+checks are in `game/tests/unit/interaction/`.

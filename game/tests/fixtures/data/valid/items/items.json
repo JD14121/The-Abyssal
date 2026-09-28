@@ -1,0 +1,4 @@
+[
+  {"type": "item", "id": "knife", "name": "Knife", "category": "weapon", "mass": 0.25, "materials": ["steel", "wood"]},
+  {"type": "item", "id": "steel", "name": "Steel sample", "category": "misc"}
+]

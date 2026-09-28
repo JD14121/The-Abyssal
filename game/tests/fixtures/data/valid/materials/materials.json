@@ -1,0 +1,4 @@
+[
+  {"type": "material", "id": "steel", "name": "Steel", "density": 7.85},
+  {"type": "material", "id": "wood", "name": "木材", "flammable": true}
+]
