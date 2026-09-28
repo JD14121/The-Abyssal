@@ -153,18 +153,23 @@ in Phase 5. Phase 6 — Loot Foundation follows.
 - **Complete** — Python validator/report support, debug scene and regression tests
 
 No Medicine, Health effects, charges, partial use, stacking, consumption UI or
-persistent effect history was included. Creature/Zombie is the next phase.
+persistent effect history was included. Phase 9 follows.
 
 ---
 
-## Phase 9 - Creature and Zombie Foundation
+## Phase 9 - Creature and Zombie Foundation (Complete)
 
-- creature definitions
-- zombie scene
-- perception
-- idle state
-- chase state
-- attack state
+- **Complete** — CreatureDefinition schema, JSON data, atomic Registry integration and Python validation/reporting
+- **Complete** — CharacterBody2D Zombie scene, definition binding, injected target and safe initialization failures
+- **Complete** — distance-based IDLE/CHASE/ATTACK transitions and NavigationAgent2D movement with world collision
+- **Complete** — real-time attack request cadence with no damage or SurvivalState coupling
+- **Complete** — Creature registry/schema tests, Zombie state/cadence/navigation integration test and debug yard
+
+No combat resolution, damage, Creature health/death, bites, scratches, wounds,
+infection, hearing/noise, line of sight, vision cone, target memory,
+search/investigation/wandering, Zombie separation/hordes, spawning, population
+simulation, off-screen AI, loot, animation, sound or persistence was included.
+Phase 10 — Combat Foundation follows.
 
 ---
 

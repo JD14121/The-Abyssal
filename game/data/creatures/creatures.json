@@ -1,0 +1,20 @@
+[
+  {
+    "type": "creature",
+    "id": "zombie_basic",
+    "name": "Basic Zombie",
+    "move_speed": 70.0,
+    "vision_range": 320.0,
+    "attack_range": 38.0,
+    "attack_interval": 1.2
+  },
+  {
+    "type": "creature",
+    "id": "zombie_slow",
+    "name": "Slow Zombie",
+    "move_speed": 45.0,
+    "vision_range": 320.0,
+    "attack_range": 38.0,
+    "attack_interval": 1.6
+  }
+]

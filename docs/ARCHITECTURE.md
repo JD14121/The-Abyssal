@@ -16,6 +16,10 @@ population. Phase 7 adds a shared logical GameClock and per-entity SurvivalState
 advanced by a Player-local SurvivalComponent. Phase 8 adds static Consumable
 profiles and a service that atomically coordinates Inventory item use with
 SurvivalState effects.
+Phase 9 adds generic Creature definitions and a composed Zombie runtime using
+injected targets, distance perception, a compact state machine and Godot
+NavigationAgent2D. Its attack signal stops at an intent request; combat remains
+separate and unimplemented.
 
 Gameplay Data
 -> Data Registry
@@ -26,7 +30,43 @@ Gameplay Data
 
 Persistence operates alongside runtime entities and simulation systems.
 
+Creature JSON
+-> CreatureDefinition
+-> DataRegistry
+-> ZombieController
+-> IDLE / CHASE / ATTACK
+-> NavigationAgent2D
+-> attack_requested
+-> [future Combat System]
+
 ## Main Layers
+
+### Creature and Zombie AI (Phase 9)
+
+`CreatureDefinition` contains shared `move_speed`, `vision_range`,
+`attack_range` and `attack_interval` values. DataRegistry publishes the Creature
+dictionary only with the rest of the definitions; any fatal Creature error
+clears every Registry index. Creature has no current cross-reference to Items,
+Loot or Survival.
+
+`ZombieController` is attached to a `CharacterBody2D` scene with a
+`NavigationAgent2D`. The World/test assembly injects a `Node2D` target through
+`set_target()`. The controller never searches the SceneTree for Players. Its
+distance-only perception selects IDLE outside vision, CHASE inside vision, and
+ATTACK inside attack range. CHASE obtains a point from NavigationAgent2D and
+moves through `velocity` and `move_and_slide()`, respecting world collision.
+An unready navigation map or missing path safely results in zero velocity.
+
+ATTACK stops movement and emits `attack_requested(attacker, target)` immediately
+when its cooldown is ready, then at the definition's real-time interval. The
+cooldown continues through state changes. No listener in Phase 9 resolves a hit
+or accesses SurvivalState; the signal records AI intent only.
+
+Known limits: walls do not block perception; there is no vision cone, target
+memory, hearing, noise, wander/search/investigate state, Zombie separation,
+horde behavior, spawning, population simulation, off-screen simulation, health,
+damage, death, bites, scratches, wounds, infection, loot, animation, sound or
+persistence. Phase 10 owns combat resolution and damage.
 
 ### Data
 

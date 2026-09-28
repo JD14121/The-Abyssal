@@ -88,7 +88,7 @@ python -m unittest discover -s tools/tests -v
 
 All tools return 0 on success and 1 for content errors. `--data-root PATH`
 selects another data root containing `core/`, `materials/`, `items/` and `loot/`;
-the four-group manifest also requires `consumables/`.
+the production five-group manifest also requires `creatures/`.
 The default root is resolved relative to the tools, independent of the working directory.
 The syntax checker scans all JSON recursively. The other three tools validate
 the complete supported schemas, IDs and references before reporting success.
@@ -120,11 +120,14 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' --script res://tests/unit/consumables/test_consumable_registry.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/consumables/test_consumable_use_service.gd
 & $godotExecutable --headless --path './game' res://debug/test_scenes/consumable_test.tscn --quit-after 4
+& $godotExecutable --headless --path './game' --script res://tests/unit/creatures/test_creature_registry.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/creatures/test_zombie_foundation.gd
+& $godotExecutable --headless --path './game' res://debug/test_scenes/zombie_test.tscn --quit-after 4
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
 as well as its exit code. The second starts the real Autoload and the Player
-Foundation test world. Expected output includes `Materials: 5; Items: 10; Loot: 9; Consumables: 2`
+Foundation test world. Expected output includes `Materials: 5; Items: 10; Loot: 9; Consumables: 2; Creatures: 2`
 and `[PlayerFoundation] Test world ready`. Startup terminates with exit code 1
 if data validation fails. The original data-only scene remains available at
 `res://scenes/bootstrap/data_smoke_test.tscn`.
@@ -249,6 +252,13 @@ atomic DataRegistry publication, schema/ID/reference validation, Python tools,
 5 example materials and 10 example items across 6 categories. Consumable profiles
 reference Items by ID and contain only hunger/thirst deltas.
 
+Phase 9: Creature / Zombie Foundation (complete)
+
+Implemented: shared CreatureDefinition loading and validation, a data-bound
+ZombieController with distance-based IDLE/CHASE/ATTACK states, NavigationAgent2D
+movement and an attack-request signal. The debug yard includes a navigable
+obstacle; attack requests do not resolve damage or change Player health.
+
 Phase 0B adds independent item instances, UUID identities, validated condition
 changes and JSON-compatible serialization/reconstruction. Usage and record
 contracts are in [Architecture](docs/ARCHITECTURE.md) and
@@ -265,15 +275,16 @@ with independent Inventories, and Player-local Container access. Phase 6 adds
 validated Loot groups, injected-RNG resolution into independent ItemInstances,
 and all-or-nothing capacity-aware Container population. Phase 8 adds
 ConsumableDefinition loading and atomic consumption of an exact Inventory item
-instance. Map placement, search, UI and persistence remain deferred.
+instance. Phase 9 adds a generic Creature registry and Zombie AI/navigation
+foundation. Map placement, combat resolution, UI and persistence remain deferred.
 
 ## Project Status
 
 Repository initialization, static data, item runtime, player movement,
 interaction, Inventory and WorldItem pickup/drop foundations are implemented.
 Container access, Inventory transfers and the Loot foundation are implemented.
-The Phase 7 GameClock and Player survival foundations and Phase 8 Consumable
-Foundation are implemented. No
+The Phase 7 GameClock and Player survival foundations, Phase 8 Consumable
+Foundation, and Phase 9 Creature/Zombie Foundation are implemented. No
 Inventory or Container UI, map-based Loot placement or full save/load is implemented.
 Existing engine settings are preserved; the project uses DataRegistry and GameClock
 Autoloads and the Player Foundation test-world entry scene. See [Data Schema](docs/DATA_SCHEMA.md) and
@@ -286,4 +297,4 @@ The current Godot executables and VS Code shortcut live outside this repository.
 The first-stage empty directories exist locally. Git does not preserve empty
 directories; create them as needed after cloning. No placeholder files are required.
 
-Recommended next phase: Phase 9 - Creature / Zombie Foundation.
+Recommended next phase: Phase 10 - Combat Foundation.

@@ -1,13 +1,14 @@
 extends RefCounted
 ## Central schema rules for supported static definition types.
 
-const GROUP_TYPES := {"materials": "material", "items": "item", "loot": "loot", "consumables": "consumable"}
+const GROUP_TYPES := {"materials": "material", "items": "item", "loot": "loot", "consumables": "consumable", "creatures": "creature"}
 const COMMON_FIELDS := ["type", "id", "name"]
 const MATERIAL_FIELDS := ["density", "flammable"]
 const ITEM_FIELDS := ["category", "mass", "materials"]
 const LOOT_FIELDS := ["rolls", "entries"]
 const LOOT_ENTRY_FIELDS := ["item_id", "weight", "chance", "min_quantity", "max_quantity"]
 const CONSUMABLE_FIELDS := ["item_id", "hunger_delta", "thirst_delta"]
+const CREATURE_FIELDS := ["move_speed", "vision_range", "attack_range", "attack_interval"]
 
 var errors: Array[String] = []
 var warnings: Array[String] = []
@@ -15,9 +16,9 @@ var _id_pattern := RegEx.create_from_string("^[a-z][a-z0-9_]*$")
 
 
 func validate_load_order(value: Variant, source: String) -> bool:
-	var supported_orders := [["materials", "items", "loot"], ["materials", "items", "loot", "consumables"]]
+	var supported_orders := [["materials", "items", "loot"], ["materials", "items", "loot", "consumables"], ["materials", "items", "loot", "consumables", "creatures"]]
 	if not value is Dictionary or value.get("groups") not in supported_orders:
-		errors.append("%s | field groups: expected materials, items, loot, optionally followed by consumables" % source)
+		errors.append("%s | field groups: expected materials, items, loot, optionally followed by consumables and creatures" % source)
 		return false
 	for field in value:
 		if field != "groups":
@@ -81,6 +82,9 @@ func validate(entry: Variant, expected_type: String, source: String,
 						errors.append("%s | field materials: expected string material ID" % context)
 					elif not known_materials.has(StringName(material_id)):
 						errors.append("%s | field materials: unknown material ID %s" % [context, material_id])
+	elif expected_type == "creature":
+		allowed.append_array(CREATURE_FIELDS)
+		_validate_creature(entry, context)
 	for field in entry:
 		if field not in allowed:
 			warnings.append("%s | field %s: unknown optional field" % [context, field])
@@ -109,6 +113,16 @@ func _validate_consumable(entry: Dictionary, context: String, known_items: Dicti
 		errors.append("%s | field hunger_delta: expected finite number" % context)
 	if not _is_finite_number(thirst):
 		errors.append("%s | field thirst_delta: expected finite number" % context)
+
+
+func _validate_creature(entry: Dictionary, context: String) -> void:
+	for field in CREATURE_FIELDS:
+		if not entry.has(field):
+			errors.append("%s | field %s: missing required field" % [context, field])
+		elif not _is_finite_number(entry[field]) or float(entry[field]) <= 0.0:
+			errors.append("%s | field %s: expected finite number > 0" % [context, field])
+	if _is_finite_number(entry.get("attack_range")) and _is_finite_number(entry.get("vision_range")) and float(entry.attack_range) > float(entry.vision_range):
+		errors.append("%s | field attack_range: expected <= vision_range" % context)
 
 
 func _validate_loot(entry: Dictionary, context: String, known_items: Dictionary) -> void:

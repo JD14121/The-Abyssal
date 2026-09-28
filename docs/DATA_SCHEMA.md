@@ -31,6 +31,7 @@ water_bottle_1l
 2. Item
 3. Loot group
 4. Consumable
+5. Creature
 
 Consumables were added in Phase 8. Additional types will be added incrementally.
 
@@ -44,20 +45,23 @@ invalid escapes and malformed numeric tokens, are rejected.
 `game/data/core/load_order.json` contains:
 
 ```json
-{"groups": ["materials", "items", "loot", "consumables"]}
+{"groups": ["materials", "items", "loot", "consumables", "creatures"]}
 ```
 
 Production manifests list each group exactly once in dependency order. The
-supported order is `materials`, `items`, `loot`, then `consumables`; the previous
-three-group manifest remains accepted for existing isolated Phase 0–7 fixtures.
-Missing, reordered, duplicated or unknown groups are fatal. The manifest is
-configuration, not a gameplay definition, so it needs no `type` or `id`.
+supported production order is `materials`, `items`, `loot`, `consumables`, then
+`creatures`. Previous three- and four-group manifests remain accepted for
+isolated earlier-phase fixtures. Missing, reordered, duplicated or unknown
+groups are fatal. The manifest is configuration, not a gameplay definition, so
+it needs no `type` or `id`.
 
 Items load before Loot and Consumables so their `item_id` references can be
 checked against an existing ItemDefinition. Consumables load after Loot; Loot
 has no Consumable dependency. The loader recursively reads lowercase `.json`
-files in `materials/`, `items/`, `loot/` and `consumables/`. Paths are sorted
-lexically within each group and array order is retained.
+Creature definitions have no references to earlier data groups. Creature data
+loads last to keep stage order explicit. The loader recursively reads lowercase
+`.json` files in each listed group. Paths are sorted lexically within each group
+and array order is retained.
 Directories must exist and be readable. Directory symbolic links are rejected.
 Other directories are not runtime content in this phase; the Python syntax tool
 still checks their JSON files. Broken fixtures live under `game/tests/fixtures/data/`
@@ -222,6 +226,30 @@ the manifest.
 Consumable `item_id` values must also resolve to an earlier ItemDefinition;
 each Item may map to at most one Consumable.
 
+## Creature
+
+Creature definitions hold shared AI and movement parameters. The first version
+supports a Zombie controller and requires all fields below:
+
+```json
+{
+  "type": "creature",
+  "id": "zombie_basic",
+  "name": "Basic Zombie",
+  "move_speed": 70.0,
+  "vision_range": 320.0,
+  "attack_range": 38.0,
+  "attack_interval": 1.2
+}
+```
+
+`move_speed` is world pixels per real gameplay second. `vision_range` and
+`attack_range` are world-space pixels. `attack_interval` is real gameplay
+seconds and is unaffected by GameClock time scale. Each numeric field must be
+finite and greater than zero; `attack_range` must not exceed `vision_range`.
+Creature IDs are unique within the Creature type. No Health, damage, armor,
+hearing, loot or persistence fields belong to this first version.
+
 Invalid references must produce validation errors.
 
 ## Validation Requirements
@@ -237,6 +265,8 @@ The implemented pipeline detects:
 - unknown or misplaced definition types
 - negative or non-finite density/mass
 - non-finite Consumable effects
+- non-finite or non-positive Creature movement/perception/cadence values
+- Creature attack range larger than its vision range
 - invalid load-order configuration or unreadable data paths
 
 Validation errors should include:

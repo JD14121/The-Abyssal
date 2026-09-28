@@ -4,6 +4,9 @@
 
 ### Added
 
+- CreatureDefinition static schema, Creature Registry lookup, and all-or-nothing load integration
+- Zombie CharacterBody2D scene with distance perception, IDLE/CHASE/ATTACK behavior, NavigationAgent2D and attack-request cadence
+- Creature Python validation/report support, invalid fixtures, runtime/navigation tests and Zombie debug yard
 - ConsumableDefinition data, item-to-Consumable Registry lookups and Item reference validation
 - Atomic hunger/thirst ConsumableUseService that consumes the exact ItemInstance with rollback diagnostics
 - Consumable Python validation/content reporting, fixtures, tests and development test scene

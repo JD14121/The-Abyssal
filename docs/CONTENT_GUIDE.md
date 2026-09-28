@@ -102,3 +102,21 @@ To make an existing Item usable for hunger/thirst effects:
 Consumable behavior comes from this profile rather than the Item category. The
 current use service consumes one exact Inventory `instance_id`; it does not
 support WorldItems, Container UI, charges or partial use.
+
+## Creature Definitions
+
+To add a Creature definition for the AI/movement layer:
+
+1. Choose a stable lowercase `id` and non-empty `name`.
+2. Add a record under `game/data/creatures/` with `move_speed`, `vision_range`,
+   `attack_range` and `attack_interval`.
+3. Use finite positive values and keep `attack_range <= vision_range`.
+4. Run the JSON, ID, reference and content-report tools; the report includes
+   `Creatures: N`.
+5. Set the matching `definition_id` on a Zombie scene/controller and exercise
+   it in `res://debug/test_scenes/zombie_test.tscn`.
+
+Creature parameters describe shared static data. ZombieController owns runtime
+targeting and state. Perception uses distance only, so walls do not block
+detection. Creature data does not yet contain Health, damage, armor, hearing,
+loot or persistence.
