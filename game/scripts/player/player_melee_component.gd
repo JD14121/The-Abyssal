@@ -5,6 +5,9 @@ const CombatServiceScript = preload("res://scripts/combat/combat_service.gd")
 const DamageReceiverScript = preload("res://scripts/combat/damage_receiver.gd")
 
 @export var detection_area_path: NodePath = ^"MeleeTargetArea"
+@export_range(15.0, 180.0, 1.0) var attack_arc_degrees := 100.0
+@export_range(0.0, 500.0, 1.0) var stagger_impulse := 105.0
+@export_range(0.0, 2.0, 0.01) var stagger_duration := 0.22
 
 var equipped_instance_id := ""
 var cooldown_remaining := 0.0
@@ -12,6 +15,7 @@ var _combat_enabled := true
 var _candidates: Array[Node2D] = []
 var _inventory_component: Node
 var _registry: Node
+var _noise_system: Node
 var _combat_service := CombatServiceScript.new()
 var _area: Area2D
 
@@ -19,6 +23,8 @@ var _area: Area2D
 func _ready() -> void:
 	_inventory_component = get_parent().get_node_or_null("PlayerInventoryComponent")
 	_registry = get_tree().root.get_node_or_null("DataRegistry")
+	_noise_system = get_parent().get_parent().get_node_or_null("NoiseSystem") \
+		if get_parent().get_parent() != null else null
 	_area = get_node_or_null(detection_area_path) as Area2D
 	if _area != null:
 		_area.body_entered.connect(_on_body_entered)
@@ -82,6 +88,11 @@ func try_attack() -> bool:
 		return false
 	if not _combat_service.resolve_melee_attack(get_parent(), target):
 		return false
+	var player_position := _get_player_position()
+	if target.has_method("apply_stagger"):
+		target.apply_stagger((target.global_position - player_position).normalized() * stagger_impulse, stagger_duration)
+	if is_instance_valid(_noise_system) and _noise_system.has_method("emit_noise"):
+		_noise_system.emit_noise(player_position, 220.0, &"melee_attack", get_parent())
 	cooldown_remaining = weapon.attack_interval
 	return true
 
@@ -93,7 +104,12 @@ func select_target(max_range: float) -> Node2D:
 		if not is_instance_valid(candidate) or not _is_legal_target(candidate):
 			continue
 		var distance: float = _get_player_position().distance_to(candidate.global_position)
-		if distance <= max_range and distance < best_distance:
+		var offset := candidate.global_position - _get_player_position()
+		var direction := offset.normalized()
+		var facing := get_facing_direction()
+		var arc_dot := cos(deg_to_rad(clampf(attack_arc_degrees, 15.0, 180.0) * 0.5))
+		if distance <= max_range and not direction.is_zero_approx() and facing.dot(direction) >= arc_dot \
+			and distance < best_distance:
 			best = candidate
 			best_distance = distance
 	return best
@@ -101,6 +117,14 @@ func select_target(max_range: float) -> Node2D:
 
 func get_candidate_count() -> int:
 	return _candidates.size()
+
+
+func set_facing_direction(direction: Vector2) -> bool:
+	return get_parent().set_facing_direction(direction) if get_parent().has_method("set_facing_direction") else false
+
+
+func get_facing_direction() -> Vector2:
+	return get_parent().get_facing_direction() if get_parent().has_method("get_facing_direction") else Vector2.RIGHT
 
 
 func _get_equipped_weapon():

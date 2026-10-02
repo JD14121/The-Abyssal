@@ -4,5 +4,11 @@
     "id": "medical_clean_bandage",
     "item_id": "clean_bandage",
     "bleeding_reduction_per_game_hour": 0.75
+  },
+  {
+    "type": "medical",
+    "id": "medical_antibiotic_tablet",
+    "item_id": "antibiotic_tablet",
+    "infection_reduction_per_game_hour": 25.0
   }
 ]

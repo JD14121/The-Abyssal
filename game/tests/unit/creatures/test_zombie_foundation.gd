@@ -71,11 +71,11 @@ func _run() -> void:
 	check(attack_requests == 2, "leaving attack range stops attack requests")
 	target.global_position = zombie.global_position + Vector2(500, 0)
 	zombie.physics_step(0.0)
-	check(zombie.get_state_name() == "IDLE", "leaving vision returns to IDLE")
+	check(zombie.get_state_name() == "INVESTIGATE", "leaving vision follows the last known target position")
 	target.queue_free()
 	await process_frame
 	zombie.physics_step(0.0)
-	check(zombie.get_state_name() == "IDLE" and zombie.target == null, "freed target is cleared safely")
+	check(zombie.get_state_name() == "INVESTIGATE" and zombie.target == null, "freed target is cleared while memory is investigated")
 	check(is_equal_approx(survival_state.get_health(), health_before), "attack requests do not access or alter SurvivalState health")
 	var slow_zombie: ZombieController = packed.instantiate()
 	slow_zombie.definition_id = &"zombie_slow"
@@ -88,7 +88,7 @@ func _run() -> void:
 	slow_zombie.set_target(slow_target)
 	slow_zombie.physics_step(0.0)
 	zombie.physics_step(0.0)
-	check(slow_zombie.get_state_name() == "CHASE" and zombie.get_state_name() == "IDLE", "Zombie target and state remain instance-local")
+	check(slow_zombie.get_state_name() == "CHASE" and zombie.get_state_name() == "INVESTIGATE", "Zombie target and state remain instance-local")
 	slow_target.queue_free()
 	slow_zombie.queue_free()
 	await process_frame
@@ -111,6 +111,11 @@ func _run() -> void:
 		var start_position: Vector2 = Vector2(520, 400)
 		yard_zombie.global_position = start_position
 		yard_player.global_position = Vector2(680, 400)
+		yard_zombie.set_facing_direction(Vector2.RIGHT)
+		var noise_system := NoiseSystem.new()
+		yard.add_child(noise_system)
+		yard_zombie.set_noise_system(noise_system)
+		noise_system.emit_noise(yard_player.global_position, 420.0, &"zombie_test_noise", yard_player)
 		var moved_around_obstacle := false
 		for _frame in range(420):
 			await physics_frame

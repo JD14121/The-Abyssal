@@ -37,6 +37,8 @@ func _run() -> void:
 	await process_frame
 	var player_inventory = player.get_node("PlayerInventoryComponent").get_inventory()
 	var wounds = player.get_node("WoundComponent")
+	var infections = player.get_node("InfectionComponent")
+	var injuries = player.get_node("InjuryComponent")
 	var factory = load(FACTORY_PATH).new(registry)
 	var bandages: Array[ItemInstance] = []
 	for index in range(4):
@@ -54,6 +56,8 @@ func _run() -> void:
 	var wound_list: Array = wounds.get_wounds()
 	var wound_a = wound_list[0]
 	var wound_b = wound_list[1]
+	check(infections.get_infection(wound_a.wound_id) != null, "new wounds receive independent infection state")
+	check(injuries.get_injury(wound_a.wound_id) != null and injuries.get_movement_multiplier() < 1.0, "severe wounds create movement-affecting injury state")
 	check(not service.treat_wound(player_inventory, wounds, bandages[0].instance_id, "unknown_wound"), "unknown wound_id is rejected")
 	check(not service.treat_wound(player_inventory, wounds, "unknown_item", wound_a.wound_id), "unknown Inventory instance is rejected")
 	check(not service.treat_wound(player_inventory, wounds, hammer.instance_id, wound_a.wound_id), "non-medical Item is rejected")
@@ -74,6 +78,15 @@ func _run() -> void:
 	check(not service.treat_wound(player_inventory, rejecting_wounds, bandages[3].instance_id, rejected_wound_id), "Wound mutation failure rejects the treatment transaction")
 	check(player_inventory.get_item(bandages[3].instance_id) == bandages[3], "failed treatment restores the same bandage instance")
 	check(is_equal_approx(rejecting_wounds.wound.get_bleeding_rate_per_game_hour(), 1.0), "failed treatment leaves the Wound unchanged")
+	var antibiotic: ItemInstance = factory.create(&"antibiotic_tablet")
+	check(player_inventory.add_item(antibiotic), "Inventory accepts antibiotic ItemInstance")
+	check(not service.treat_wound(player_inventory, wounds, antibiotic.instance_id, wound_b.wound_id, infections), "antibiotics reject an untreated Wound")
+	check(player_inventory.get_item(antibiotic.instance_id) == antibiotic, "ineffective antibiotic treatment preserves its ItemInstance")
+	check(infections.advance_game_time(3.0 * 3600.0), "infection progresses from the target Wound over game time")
+	var infection = infections.get_infection(wound_b.wound_id)
+	check(infection != null and infection.is_infected(), "progressed infection is linked to wound_id")
+	check(service.treat_wound(player_inventory, wounds, antibiotic.instance_id, wound_b.wound_id, infections), "antibiotic treats the matching infected wound")
+	check(not infection.is_infected() and not player_inventory.has_item(antibiotic.instance_id), "antibiotic reduces infection and consumes its exact instance")
 	rejecting_wounds.free()
 	attacker.queue_free()
 	player.queue_free()

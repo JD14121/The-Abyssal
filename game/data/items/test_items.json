@@ -8,5 +8,8 @@
   {"type": "item", "id": "flashlight", "name": "Flashlight", "category": "tool", "mass": 0.2, "materials": ["plastic", "glass", "steel"]},
   {"type": "item", "id": "cotton_shirt", "name": "Cotton Shirt", "category": "clothing", "mass": 0.18, "materials": ["cloth"]},
   {"type": "item", "id": "glass_bottle", "name": "Glass Bottle", "category": "misc", "mass": 0.3, "materials": ["glass"]},
-  {"type": "item", "id": "scrap_metal", "name": "Scrap Metal", "category": "misc", "mass": 0.5, "materials": ["steel"]}
+  {"type": "item", "id": "scrap_metal", "name": "Scrap Metal", "category": "misc", "mass": 0.5, "materials": ["steel"]},
+  {"type": "item", "id": "antibiotic_tablet", "name": "Antibiotic Tablet", "category": "medicine", "mass": 0.01, "materials": ["plastic"]},
+  {"type": "item", "id": "pipe_pistol", "name": "Pipe Pistol", "category": "weapon", "mass": 1.1, "materials": ["steel", "wood"]},
+  {"type": "item", "id": "pistol_round", "name": "Pistol Round", "category": "ammo", "mass": 0.012, "materials": ["steel"]}
 ]

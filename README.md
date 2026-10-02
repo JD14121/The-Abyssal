@@ -137,18 +137,25 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' --script res://tests/unit/wounds/test_wound_integration.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/medical/test_medical_registry.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/medical/test_medical_treatment.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/wounds/test_injury_disease.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/world/test_noise_foundation.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/world/test_world_grid.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/player/test_equipment_foundation.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/combat/test_ranged_weapon_foundation.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/world/test_survival_demo.gd
+python -m unittest tools.tests.test_data_tools -v
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
-as well as its exit code. The second starts the real Autoload and the Player
-Foundation test world. Expected output includes `Materials: 5; Items: 10; Loot: 9; Consumables: 2; Creatures: 2; Weapons: 1; Medical: 1`
-and `[PlayerFoundation] Test world ready`. Startup terminates with exit code 1
-if data validation fails. The original data-only scene remains available at
+as well as its exit code. The second starts the real Autoload and the default
+Survival Demo. Expected output includes `Materials: 5; Items: 13; Loot: 10; Consumables: 2; Creatures: 2; Weapons: 2; Medical: 2`
+and `[DemoWorld] Playable town ready | seed=14028 | zombies=7`. Startup terminates with exit code 1
+if data or world layout validation fails. The original data-only scene remains available at
 `res://scenes/bootstrap/data_smoke_test.tscn`.
 
 The test commands run static-data, runtime-item, player, interaction,
-Inventory, WorldItem, transfer, Container, survival, combat, lifecycle, Wound
-and Medical tests and return nonzero if any check fails. The runtime suite also creates 10,000 live
+Inventory, WorldItem, transfer, Container, survival, combat, lifecycle, Wound,
+Medical, perception, equipment, ranged weapon and demo assembly tests and return nonzero if any check fails. The runtime suite also creates 10,000 live
 instances across two factories to check UUID uniqueness and format.
 Negative cases intentionally emit errors/warnings; the final check summary
 distinguishes expected rejections from test failures. Tests use isolated temporary
@@ -168,6 +175,19 @@ From the repository root, use the executable variable above without `--headless`
 ```powershell
 & $godotExecutable --path './game'
 ```
+
+## Milestone B Survival Demo
+
+F5 now starts a bounded, seed-based top-down town. Controls:
+
+- **WASD / arrows** move and set the facing direction.
+- **E** interacts with doors, windows, furniture, and the green extraction marker.
+- **Space** performs a facing-based melee attack; equip the pistol from inventory, then use **R** to fire and **Q** to reload.
+- **Tab** opens Player and nearby-container inventories. Select an item to equip, use (**C**), treat (**T**), store, or drop (**G**).
+- Select a wound in the wound row before using a bandage or antibiotic. Bandages reduce bleeding; antibiotics reduce established infection.
+- Reach the green extraction marker and press **E** to finish the demo.
+
+The demo exposes `world_seed` on `game/scripts/world/demo_world.gd`. Identical seeds reproduce building placement, furniture loot, and Zombie spawn positions. Placeholder art is drawn with original Godot shapes.
 
 Manual acceptance:
 

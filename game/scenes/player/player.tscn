@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/interaction/interaction_component.gd" id="2"]
@@ -10,6 +10,10 @@
 [ext_resource type="Script" path="res://scripts/player/player_melee_component.gd" id="8"]
 [ext_resource type="Script" path="res://scripts/lifecycle/player_defeat_component.gd" id="9"]
 [ext_resource type="Script" path="res://scripts/wounds/wound_component.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/wounds/infection_component.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/wounds/injury_component.gd" id="12"]
+[ext_resource type="Script" path="res://scripts/player/equipment_component.gd" id="13"]
+[ext_resource type="Script" path="res://scripts/combat/ranged_weapon_component.gd" id="14"]
 
 [sub_resource type="RectangleShape2D" id="PlayerShape"]
 size = Vector2(32, 32)
@@ -52,6 +56,9 @@ world_item_scene = ExtResource("4")
 [node name="ContainerAccessComponent" type="Node" parent="."]
 script = ExtResource("5")
 
+[node name="EquipmentComponent" type="Node" parent="."]
+script = ExtResource("13")
+
 [node name="SurvivalComponent" type="Node" parent="."]
 script = ExtResource("6")
 
@@ -60,6 +67,9 @@ script = ExtResource("7")
 
 [node name="PlayerMeleeComponent" type="Node" parent="."]
 script = ExtResource("8")
+
+[node name="RangedWeaponComponent" type="Node" parent="."]
+script = ExtResource("14")
 
 [node name="MeleeTargetArea" type="Area2D" parent="PlayerMeleeComponent"]
 collision_layer = 0
@@ -73,3 +83,9 @@ script = ExtResource("9")
 
 [node name="WoundComponent" type="Node" parent="."]
 script = ExtResource("10")
+
+[node name="InfectionComponent" type="Node" parent="."]
+script = ExtResource("11")
+
+[node name="InjuryComponent" type="Node" parent="."]
+script = ExtResource("12")

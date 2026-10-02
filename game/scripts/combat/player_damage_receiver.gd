@@ -41,6 +41,14 @@ func receive_damage(event: DamageEvent) -> bool:
 
 
 func apply_bleeding_damage(amount: float) -> bool:
+	return _apply_continuous_damage(amount)
+
+
+func apply_infection_damage(amount: float) -> bool:
+	return _apply_continuous_damage(amount)
+
+
+func _apply_continuous_damage(amount: float) -> bool:
 	if not is_finite(amount) or amount <= 0.0 or is_depleted():
 		return false
 	var state = _get_state()

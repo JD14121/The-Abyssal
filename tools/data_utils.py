@@ -24,8 +24,8 @@ TYPE_FIELDS = {
     "loot": {"rolls", "entries"},
     "consumable": {"item_id", "hunger_delta", "thirst_delta"},
     "creature": {"move_speed", "vision_range", "attack_range", "attack_interval", "max_health", "melee_damage"},
-    "weapon": {"item_id", "melee_damage", "melee_range", "attack_interval"},
-    "medical": {"item_id", "bleeding_reduction_per_game_hour"},
+    "weapon": {"item_id", "kind", "melee_damage", "melee_range", "attack_interval", "damage", "range", "ammo_item_id", "magazine_size", "reload_time", "noise_radius", "projectile_speed"},
+    "medical": {"item_id", "bleeding_reduction_per_game_hour", "infection_reduction_per_game_hour"},
 }
 
 
@@ -137,12 +137,32 @@ def validate_entry(entry, expected_type: str, source: str, result: ContentResult
                 error("item_id", f"unknown item ID {item_id}")
             if item_id in result.weapon_item_sources:
                 error("item_id", f"duplicate Weapon mapping for item ID {item_id}; first defined in {result.weapon_item_sources[item_id]}")
-        for field_name in ("melee_damage", "melee_range", "attack_interval"):
-            value = entry.get(field_name)
-            if field_name not in entry:
-                error(field_name, "missing required field")
-            elif not _is_finite_number(value) or value <= 0:
-                error(field_name, "expected finite number > 0")
+        kind = entry.get("kind", "melee")
+        if kind not in ("melee", "ranged"):
+            error("kind", "expected melee or ranged")
+        if kind == "melee":
+            fields = ("melee_damage", "melee_range", "attack_interval")
+            for field_name in fields:
+                value = entry.get(field_name)
+                if field_name not in entry:
+                    error(field_name, "missing required field")
+                elif not _is_finite_number(value) or value <= 0:
+                    error(field_name, "expected finite number > 0")
+        elif kind == "ranged":
+            ammo_id = entry.get("ammo_item_id")
+            if not isinstance(ammo_id, str) or not ammo_id.strip():
+                error("ammo_item_id", "expected non-empty Item ID")
+            elif ammo_id not in result.definitions["item"]:
+                error("ammo_item_id", f"unknown item ID {ammo_id}")
+            for field_name in ("damage", "range", "attack_interval", "reload_time", "noise_radius", "projectile_speed"):
+                value = entry.get(field_name)
+                if field_name not in entry:
+                    error(field_name, "missing required field")
+                elif not _is_finite_number(value) or value <= 0:
+                    error(field_name, "expected finite number > 0")
+            magazine = entry.get("magazine_size")
+            if not _is_nonnegative_integer(magazine) or magazine == 0:
+                error("magazine_size", "expected integer > 0")
     elif expected_type == "medical":
         item_id = entry.get("item_id")
         if isinstance(item_id, str) and item_id.strip():
@@ -150,11 +170,12 @@ def validate_entry(entry, expected_type: str, source: str, result: ContentResult
                 error("item_id", f"unknown item ID {item_id}")
             if item_id in result.medical_item_sources:
                 error("item_id", f"duplicate Medical mapping for item ID {item_id}; first defined in {result.medical_item_sources[item_id]}")
-        effect = entry.get("bleeding_reduction_per_game_hour")
-        if "bleeding_reduction_per_game_hour" not in entry:
-            error("bleeding_reduction_per_game_hour", "missing required field")
-        elif not _is_finite_number(effect) or effect <= 0:
-            error("bleeding_reduction_per_game_hour", "expected finite number > 0")
+        effects = [entry.get(field) for field in ("bleeding_reduction_per_game_hour", "infection_reduction_per_game_hour") if field in entry]
+        for field in ("bleeding_reduction_per_game_hour", "infection_reduction_per_game_hour"):
+            if field in entry and (not _is_finite_number(entry[field]) or entry[field] <= 0):
+                error(field, "expected finite number > 0")
+        if not any(_is_finite_number(effect) and effect > 0 for effect in effects):
+            error("bleeding_reduction_per_game_hour/infection_reduction_per_game_hour", "expected at least one positive treatment effect")
     elif expected_type == "loot":
         _validate_loot(entry, context, result, error)
     elif expected_type == "consumable":
@@ -280,7 +301,86 @@ def load_content(root: Path) -> ContentResult:
                         result.weapon_item_sources[entry["item_id"]] = source
                     elif expected_type == "medical":
                         result.medical_item_sources[entry["item_id"]] = source
+    _validate_world_layout(root, result)
     return result
+
+
+def _validate_world_layout(root: Path, result: ContentResult) -> None:
+    path = root / "world/demo_town.json"
+    if not path.exists():
+        return
+    ok, layout = read_json(path, result)
+    if not ok:
+        return
+
+    def error(field_name, message):
+        result.errors.append(f"{path} | field {field_name}: {message}")
+
+    if not isinstance(layout, dict) or layout.get("version") != 1:
+        error("version", "expected world layout version 1")
+        return
+    bounds = layout.get("bounds")
+    if (not isinstance(bounds, list) or len(bounds) != 2
+            or not all(_is_finite_number(value) and value >= 900 for value in bounds)):
+        error("bounds", "expected finite [width, height], each >= 900")
+        return
+    for field_name, minimum_count in (("building_sites", 3), ("zombie_spawn_sites", 1)):
+        points = layout.get(field_name)
+        if not isinstance(points, list) or len(points) < minimum_count:
+            error(field_name, f"expected array with at least {minimum_count} sites")
+            continue
+        for index, point in enumerate(points):
+            if (not isinstance(point, list) or len(point) != 2
+                    or not all(_is_finite_number(value) for value in point)):
+                error(field_name, f"[{index}] expected finite [x, y]")
+            elif not (0 <= point[0] <= bounds[0] and 0 <= point[1] <= bounds[1]):
+                error(field_name, f"[{index}] falls outside world bounds")
+    extraction = layout.get("extraction")
+    if (not isinstance(extraction, list) or len(extraction) != 2
+            or not all(_is_finite_number(value) for value in extraction)):
+        error("extraction", "expected finite [x, y]")
+    elif not (0 <= extraction[0] <= bounds[0] and 0 <= extraction[1] <= bounds[1]):
+        error("extraction", "position falls outside world bounds")
+    rooms = layout.get("room_definitions")
+    if not isinstance(rooms, list) or not rooms:
+        error("room_definitions", "expected non-empty array")
+        return
+    room_ids = set()
+    furniture_ids = set()
+    for index, room in enumerate(rooms):
+        if not isinstance(room, dict):
+            error("room_definitions", f"[{index}] expected object")
+            continue
+        room_id = room.get("id")
+        if not isinstance(room_id, str) or not ID_PATTERN.fullmatch(room_id) or room_id in room_ids:
+            error(f"room_definitions[{index}].id", "expected unique lowercase_snake_case ID")
+        else:
+            room_ids.add(room_id)
+        if not isinstance(room.get("name"), str) or not room["name"].strip():
+            error(f"room_definitions[{index}].name", "expected non-empty string")
+        furniture = room.get("furniture")
+        if not isinstance(furniture, list) or not furniture:
+            error(f"room_definitions[{index}].furniture", "expected non-empty array")
+            continue
+        for furniture_index, entry in enumerate(furniture):
+            field_name = f"room_definitions[{index}].furniture[{furniture_index}]"
+            if not isinstance(entry, dict):
+                error(field_name, "expected object")
+                continue
+            furniture_id = entry.get("id")
+            if not isinstance(furniture_id, str) or not ID_PATTERN.fullmatch(furniture_id):
+                error(field_name + ".id", "expected lowercase_snake_case ID")
+            elif furniture_id in furniture_ids:
+                error(field_name + ".id", f"duplicate furniture ID {furniture_id}")
+            else:
+                furniture_ids.add(furniture_id)
+            position = entry.get("position")
+            if (not isinstance(position, list) or len(position) != 2
+                    or not all(_is_finite_number(value) for value in position)):
+                error(field_name + ".position", "expected finite [x, y]")
+            loot_id = entry.get("loot_profile_id")
+            if not isinstance(loot_id, str) or loot_id not in result.definitions["loot"]:
+                error(field_name + ".loot_profile_id", f"unknown loot profile {loot_id}")
 
 
 def run_cli(command: str) -> int:

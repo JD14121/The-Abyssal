@@ -23,7 +23,11 @@ func check(condition: bool, message: String) -> void:
 func _run() -> void:
 	var registry = RegistryScript.new()
 	check(registry.load_all_data(VALID_ROOT), "production Weapon data loads")
-	check(registry.has_weapon(&"weapon_kitchen_knife") and registry.get_all_weapons().size() == 1, "Weapon registry ID APIs work")
+	check(registry.has_weapon(&"weapon_kitchen_knife") and registry.has_weapon(&"weapon_pipe_pistol") \
+		and registry.get_all_weapons().size() == 2, "Weapon registry ID APIs load melee and ranged definitions")
+	var ranged_weapon = registry.get_weapon_for_item(&"pipe_pistol")
+	check(ranged_weapon != null and ranged_weapon.kind == &"ranged" and ranged_weapon.ammo_item_id == &"pistol_round" \
+		and ranged_weapon.magazine_size == 6, "ranged definition resolves ammunition and magazine data")
 	check(registry.get_weapon_for_item(&"kitchen_knife") == registry.get_weapon(&"weapon_kitchen_knife"), "item index resolves Weapon definition")
 	var valid := '{"type":"weapon","id":"weapon_kitchen_knife","item_id":"kitchen_knife","melee_damage":20,"melee_range":52,"attack_interval":0.7}'
 	_prepare_scratch()

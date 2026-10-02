@@ -3,6 +3,7 @@ extends CharacterBody2D
 
 @export_range(0.0, 2000.0, 1.0, "or_greater") var move_speed: float = 220.0
 var _control_enabled := true
+var _facing_direction := Vector2.RIGHT
 
 
 func _physics_process(_delta: float) -> void:
@@ -11,7 +12,14 @@ func _physics_process(_delta: float) -> void:
 		move_and_slide()
 		return
 	var direction := Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
-	velocity = calculate_velocity(direction, move_speed)
+	if not direction.is_zero_approx():
+		_facing_direction = direction.normalized()
+	var injuries := get_node_or_null("InjuryComponent")
+	var injury_multiplier: float = injuries.get_movement_multiplier() if injuries != null else 1.0
+	velocity = calculate_velocity(direction, move_speed * injury_multiplier)
+	var melee := get_node_or_null("PlayerMeleeComponent")
+	if melee != null:
+		melee.set_facing_direction(_facing_direction)
 	# CharacterBody2D applies the physics timestep itself; velocity is pixels/sec.
 	move_and_slide()
 
@@ -52,3 +60,14 @@ func get_damage_receiver() -> DamageReceiver:
 func get_melee_damage() -> float:
 	var melee := get_node_or_null("PlayerMeleeComponent")
 	return melee.get_current_melee_damage() if melee != null else 0.0
+
+
+func get_facing_direction() -> Vector2:
+	return _facing_direction
+
+
+func set_facing_direction(direction: Vector2) -> bool:
+	if not is_finite(direction.x) or not is_finite(direction.y) or direction.is_zero_approx():
+		return false
+	_facing_direction = direction.normalized()
+	return true

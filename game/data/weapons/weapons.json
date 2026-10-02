@@ -6,5 +6,19 @@
     "melee_damage": 20.0,
     "melee_range": 52.0,
     "attack_interval": 0.7
+  },
+  {
+    "type": "weapon",
+    "id": "weapon_pipe_pistol",
+    "item_id": "pipe_pistol",
+    "kind": "ranged",
+    "ammo_item_id": "pistol_round",
+    "damage": 28.0,
+    "range": 560.0,
+    "attack_interval": 0.55,
+    "magazine_size": 6,
+    "reload_time": 1.4,
+    "noise_radius": 760.0,
+    "projectile_speed": 680.0
   }
 ]

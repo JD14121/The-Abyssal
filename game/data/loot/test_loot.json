@@ -15,6 +15,7 @@
     "rolls": 2,
     "entries": [
       {"item_id": "clean_bandage", "weight": 10, "chance": 1.0, "min_quantity": 1, "max_quantity": 3},
+      {"item_id": "antibiotic_tablet", "weight": 2, "chance": 0.65, "min_quantity": 1, "max_quantity": 2},
       {"item_id": "water_bottle", "weight": 1, "chance": 0.25, "min_quantity": 1, "max_quantity": 1}
     ]
   },
@@ -25,6 +26,15 @@
     "entries": [
       {"item_id": "hammer", "weight": 5, "chance": 0.7, "min_quantity": 1, "max_quantity": 1},
       {"item_id": "flashlight", "weight": 2, "chance": 0.8, "min_quantity": 1, "max_quantity": 1}
+    ]
+  },
+  {
+    "type": "loot",
+    "id": "loot_test_ranged",
+    "rolls": 4,
+    "entries": [
+      {"item_id": "pipe_pistol", "weight": 1, "chance": 1.0, "min_quantity": 1, "max_quantity": 1},
+      {"item_id": "pistol_round", "weight": 10, "chance": 1.0, "min_quantity": 6, "max_quantity": 12}
     ]
   },
   {"type": "loot", "id": "loot_test_empty", "rolls": 0, "entries": []},

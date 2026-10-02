@@ -211,75 +211,88 @@ Phase 10 — Combat Foundation follows.
 - WoundState validates and serializes its identity and finite non-negative bleeding rate
 - Player WoundComponent advances bleeding using GameClock time and applies Health loss through PlayerDamageReceiver
 - Lethal blood loss uses the existing Player defeat signal and lifecycle
-- Body-region localization, infection, pain, fractures, UI and disk persistence remain deferred
+- Body-region localization, infection, pain, fractures, UI and disk persistence were deferred at the Phase 13 boundary; Milestone B adds the first versions below
 
 ## Phase 14 - Medical and Bandage Foundation (Complete)
 
 - MedicalDefinition static data maps a treatment Item to bleeding reduction
 - TreatmentService applies a bandage to one exact `wound_id`
 - Successful treatment consumes only the requested Inventory `instance_id`; invalid targets and rejected effects preserve it
-- Infection, pain, fractures, UI and persistence remain deferred
+- Complex infection, detailed injury treatment, and persistence remain deferred
 
-## Phase 15 - Infection and Disease Foundation
+## Milestone B - Playable Survival Sandbox (Complete)
 
-- Wound infection risk and disease progression
-- Basic antibiotics and treatment rules
+Milestone B combines Phases 15-28 into a bounded top-down demo. It is a
+systems slice with original shape-based placeholder visuals. Save/load,
+streaming, large-scale population and broad authored content remain future work.
 
-## Phase 16 - Advanced Injury Foundation
+### Phase 15 - Infection and Disease Foundation (Complete)
 
-- Pain, fractures, movement penalties, severity and healing progression
+- Independent InfectionState records advance per wound on GameClock time
+- Infection causes gradual Health loss after the symptom threshold
+- Antibiotic MedicalDefinition treats one infected wound and consumes the exact ItemInstance
 
-## Phase 17 - Noise Foundation
+### Phase 16 - Advanced Injury Foundation (Complete)
 
-- Shared NoiseEvent and world propagation
-- Player and world-action noise sources; Zombie hearing
+- Wound-linked InjuryState tracks severity, pain, fracture and recovery
+- Severe injuries reduce movement speed; the HUD shows pain and fractures
 
-## Phase 18 - Advanced Zombie Perception
+### Phase 17 - Noise Foundation (Complete)
+
+- World-local NoiseSystem emits validated events with distance falloff
+- Melee and firearm attacks emit noise; Zombies react through hearing
+
+### Phase 18 - Advanced Zombie Perception (Complete)
 
 - Vision cone and line of sight
 - Hearing, last known position, investigate, search and lost-target behavior
 
-## Phase 19 - Zombie Population and Spawning
+### Phase 19 - Zombie Population and Spawning (Complete for the bounded demo)
 
-- Spawn zones and population rules
-- Activation and despawn boundaries
+- Seeded spawn sites and a world-owned population cap
+- Distant actors enter dormant simulation; unloading and persistence are deferred
 
-## Phase 20 - Zombie Performance and Simulation Scaling
+### Phase 20 - Zombie Performance and Simulation Scaling (Complete for the bounded demo)
 
 - Active and simplified simulation ranges
-- Staggered AI ticks and off-screen state updates
+- Full, simplified and dormant simulation tiers are selected by Player distance
 
-## Phase 21 - World Foundation
+### Phase 21 - World Foundation (Complete for the bounded demo)
 
 - World ownership, region/chunk coordinates and replacement of debug-only world composition
 
-## Phase 22 - Building and Interior Foundation
+### Phase 22 - Building and Interior Foundation (Complete for the bounded demo)
 
 - Buildings, rooms, doors, windows, furniture and Containers
 
-## Phase 23 - Data-driven Loot Placement
+### Phase 23 - Data-driven Loot Placement (Complete for the bounded demo)
 
 - Connect building/room/furniture/container types to Loot profiles
 
-## Phase 24 - Procedural or Semi-procedural World Generation
+### Phase 24 - Seeded Small-Town Generation (Complete for the bounded demo)
 
 - Seeded roads, zones, buildings, interiors, furniture, Loot and population
 
-## Phase 25 - Inventory UI
+### Phase 25 - Inventory UI (Complete for the bounded demo)
 
 - Player and Container item lists, selection, transfer, weight and basic details
 
-## Phase 26 - Equipment Foundation
+### Phase 26 - Equipment Foundation (Complete for the bounded demo)
 
 - Equipment slots, hands, clothing and equipped-item state
 
-## Phase 27 - Combat Interaction Refinement
+### Phase 27 - Combat Interaction Refinement (Complete for the bounded demo)
 
 - Facing, attack arc, hit area, weapon reach, animation timing and stagger
 
-## Phase 28 - Ranged Weapons
+### Phase 28 - Ranged Weapons (Complete for the bounded demo)
 
 - Guns, ammunition, magazines, reloading, projectile/hitscan and gunshot Noise
+
+The default launch scene is `game/scenes/world/survival_demo.tscn`. The room,
+furniture and loot references plus bounded coordinate layout live in
+`game/data/world/demo_town.json`. DemoWorld's `world_seed` reproduces house
+placement, loot and Zombie spawn arrangement.
 
 ## Phase 29 - Save Foundation
 

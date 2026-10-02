@@ -4,6 +4,11 @@
 
 ### Added
 
+- Milestone B Survival Demo: seeded bounded town, JSON-authored rooms/furniture/loot, doors, windows, world containers and extraction objective
+- WorldGrid, scene-local NoiseSystem, Zombie vision/hearing/investigation/search, bounded population, staggered simplified AI and dormant tiers
+- Wound-linked infection and injury progression, antibiotic treatment, pain/fracture status and movement penalties
+- Inventory/Container HUD, item use/drop/treatment, equipment slot references, facing melee/stagger/noise and projectile firearm combat with ammo/reload
+- Milestone B assembly and deterministic seed tests; Python validates weapon ammunition and demo layout loot references
 - MedicalDefinition JSON schema, Item lookup indexes and validated Bandage profile
 - TreatmentService for exact `wound_id` bleeding treatment with exact Inventory ItemInstance consumption and rollback on rejected Wound mutation
 - Medical registry/treatment tests and Python Medical validation/reporting coverage

@@ -14,7 +14,8 @@ func _init(registry: Node) -> void:
 		_registry = weakref(registry)
 
 
-func treat_wound(inventory: Variant, wound_component: Variant, instance_id: String, wound_id: String) -> bool:
+func treat_wound(inventory: Variant, wound_component: Variant, instance_id: String, wound_id: String,
+		infection_component: Variant = null) -> bool:
 	_errors.clear()
 	var registry := _get_registry()
 	if registry == null or not registry.is_loaded():
@@ -34,19 +35,28 @@ func treat_wound(inventory: Variant, wound_component: Variant, instance_id: Stri
 	var medical: Variant = registry.get_medical_for_item(item.definition_id)
 	if medical == null:
 		return _fail("Item '%s' has no Medical profile" % item.definition_id)
-	var reduction: float = medical.bleeding_reduction_per_game_hour
-	if not is_finite(reduction) or reduction <= 0.0:
-		return _fail("Medical profile '%s' has an invalid treatment effect" % medical.id)
 	var wound: Variant = wound_component.get_wound(wound_id)
-	if not is_instance_valid(wound) or not wound is WoundStateType or not wound.is_valid() or not wound.is_bleeding():
-		return _fail("unknown, invalid, or already-treated Wound '%s'" % wound_id)
+	if not is_instance_valid(wound) or not wound is WoundStateType or not wound.is_valid():
+		return _fail("unknown or invalid Wound '%s'" % wound_id)
+	var treats_bleeding: bool = medical.bleeding_reduction_per_game_hour > 0.0 and wound.is_bleeding()
+	var infection: Variant = infection_component.get_infection(wound_id) if is_instance_valid(infection_component) \
+		and infection_component.has_method("get_infection") else null
+	var treats_infection: bool = medical.infection_reduction_per_game_hour > 0.0 \
+		and is_instance_valid(infection) and infection.is_infected()
+	if not treats_bleeding and not treats_infection:
+		return _fail("Wound '%s' has no condition treated by Item '%s'" % [wound_id, item.definition_id])
 
 	var removed: Variant = inventory.remove_item(instance_id)
 	if removed != item:
 		if removed != null and not inventory.add_item(removed):
 			_report_rollback_failure(removed, inventory, "Inventory removed a different ItemInstance and rejected restoration")
 		return _fail("Inventory changed while preparing to treat Wound '%s'" % wound_id)
-	if not wound.reduce_bleeding(reduction):
+	var treated := false
+	if treats_bleeding:
+		treated = wound.reduce_bleeding(medical.bleeding_reduction_per_game_hour)
+	elif treats_infection:
+		treated = infection_component.treat_infection(wound_id, medical.infection_reduction_per_game_hour)
+	if not treated:
 		var restored: bool = inventory.add_item(item)
 		if not restored:
 			_report_rollback_failure(item, inventory, "Wound rejected treatment and Inventory rejected restoration")

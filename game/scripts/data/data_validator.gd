@@ -9,8 +9,8 @@ const LOOT_FIELDS := ["rolls", "entries"]
 const LOOT_ENTRY_FIELDS := ["item_id", "weight", "chance", "min_quantity", "max_quantity"]
 const CONSUMABLE_FIELDS := ["item_id", "hunger_delta", "thirst_delta"]
 const CREATURE_FIELDS := ["move_speed", "vision_range", "attack_range", "attack_interval", "max_health", "melee_damage"]
-const WEAPON_FIELDS := ["item_id", "melee_damage", "melee_range", "attack_interval"]
-const MEDICAL_FIELDS := ["item_id", "bleeding_reduction_per_game_hour"]
+const WEAPON_FIELDS := ["item_id", "kind", "melee_damage", "melee_range", "attack_interval", "damage", "range", "ammo_item_id", "magazine_size", "reload_time", "noise_radius", "projectile_speed"]
+const MEDICAL_FIELDS := ["item_id", "bleeding_reduction_per_game_hour", "infection_reduction_per_game_hour"]
 
 var errors: Array[String] = []
 var warnings: Array[String] = []
@@ -144,11 +144,29 @@ func _validate_weapon(entry: Dictionary, context: String, known_items: Dictionar
 			errors.append("%s | field item_id: unknown item ID %s" % [context, entry.item_id])
 		if weapon_mappings.has(item_id):
 			errors.append("%s | field item_id: Item %s already maps to Weapon defined in %s" % [context, entry.item_id, weapon_mappings[item_id].source_file])
-	for field in ["melee_damage", "melee_range", "attack_interval"]:
-		if not entry.has(field):
-			errors.append("%s | field %s: missing required field" % [context, field])
-		elif not _is_finite_number(entry[field]) or float(entry[field]) <= 0.0:
-			errors.append("%s | field %s: expected finite number > 0" % [context, field])
+	var kind: Variant = entry.get("kind", "melee")
+	if kind not in ["melee", "ranged"]:
+		errors.append("%s | field kind: expected melee or ranged" % context)
+	if kind == "melee":
+		for field in ["melee_damage", "melee_range", "attack_interval"]:
+			if not entry.has(field):
+				errors.append("%s | field %s: missing required field" % [context, field])
+			elif not _is_finite_number(entry[field]) or float(entry[field]) <= 0.0:
+				errors.append("%s | field %s: expected finite number > 0" % [context, field])
+	elif kind == "ranged":
+		var ammo_id: Variant = entry.get("ammo_item_id")
+		if not ammo_id is String or ammo_id.strip_edges().is_empty():
+			errors.append("%s | field ammo_item_id: expected non-empty Item ID" % context)
+		elif not known_items.has(StringName(ammo_id)):
+			errors.append("%s | field ammo_item_id: unknown item ID %s" % [context, ammo_id])
+		for field in ["damage", "range", "attack_interval", "reload_time", "noise_radius", "projectile_speed"]:
+			if not entry.has(field):
+				errors.append("%s | field %s: missing required field" % [context, field])
+			elif not _is_finite_number(entry[field]) or float(entry[field]) <= 0.0:
+				errors.append("%s | field %s: expected finite number > 0" % [context, field])
+		var magazine: Variant = entry.get("magazine_size")
+		if not _is_nonnegative_integer(magazine) or int(magazine) == 0:
+			errors.append("%s | field magazine_size: expected integer > 0" % context)
 
 
 func _validate_medical(entry: Dictionary, context: String, known_items: Dictionary, medical_mappings: Dictionary) -> void:
@@ -162,10 +180,16 @@ func _validate_medical(entry: Dictionary, context: String, known_items: Dictiona
 			errors.append("%s | field item_id: unknown item ID %s" % [context, entry.item_id])
 		if medical_mappings.has(item_id):
 			errors.append("%s | field item_id: Item %s already maps to Medical profile defined in %s" % [context, entry.item_id, medical_mappings[item_id].source_file])
-	if not entry.has("bleeding_reduction_per_game_hour"):
-		errors.append("%s | field bleeding_reduction_per_game_hour: missing required field" % context)
-	elif not _is_finite_number(entry.bleeding_reduction_per_game_hour) or float(entry.bleeding_reduction_per_game_hour) <= 0.0:
-		errors.append("%s | field bleeding_reduction_per_game_hour: expected finite number > 0" % context)
+	var has_effect := false
+	for field in ["bleeding_reduction_per_game_hour", "infection_reduction_per_game_hour"]:
+		if not entry.has(field):
+			continue
+		if not _is_finite_number(entry[field]) or float(entry[field]) <= 0.0:
+			errors.append("%s | field %s: expected finite number > 0" % [context, field])
+		else:
+			has_effect = true
+	if not has_effect:
+		errors.append("%s | fields bleeding_reduction_per_game_hour/infection_reduction_per_game_hour: expected at least one positive treatment effect" % context)
 
 
 func _validate_loot(entry: Dictionary, context: String, known_items: Dictionary) -> void:

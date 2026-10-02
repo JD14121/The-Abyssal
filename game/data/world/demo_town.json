@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "bounds": [1800, 1200],
+  "building_sites": [[310, 290], [720, 270], [1180, 330], [1480, 760]],
+  "room_definitions": [
+    {"id": "kitchen", "name": "Kitchen", "label_position": [-112, -55], "furniture": [{"id": "cupboard", "position": [-65, -40], "loot_profile_id": "loot_test_kitchen"}]},
+    {"id": "bedroom", "name": "Bedroom", "label_position": [-112, 42], "furniture": [{"id": "nightstand", "position": [-65, 58], "loot_profile_id": "loot_test_medical"}]},
+    {"id": "storage", "name": "Storage", "label_position": [15, 42], "furniture": [{"id": "tool_shelf", "position": [65, 58], "loot_profile_id": "loot_test_ranged"}]}
+  ],
+  "zombie_spawn_sites": [[150, 160], [540, 150], [920, 170], [1390, 180], [1680, 350], [260, 620], [780, 600], [1190, 670], [1650, 950], [1100, 1010], [530, 930], [160, 1010]],
+  "extraction": [1670, 560]
+}

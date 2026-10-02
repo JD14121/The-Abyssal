@@ -28,7 +28,10 @@ shuts down Player gameplay while preserving its node and Inventory; a composed
 CreatureDeathComponent replaces a Zombie with a non-blocking Corpse only after
 the Corpse is initialized and added to the world.
 Phase 13 adds Player WoundState records from accepted damage and advances their
-bleeding on logical GameClock time.
+bleeding on logical GameClock time. Milestone B then adds wound-linked infection
+and injury state, world-local noise and Zombie perception/population services,
+bounded seeded town composition, a compact field HUD, equipment and melee/ranged
+combat extensions. These remain scene-owned components rather than new globals.
 
 Gameplay Data
 -> Data Registry
@@ -82,12 +85,10 @@ when its cooldown is ready, then at the definition's real-time interval. The
 cooldown continues through state changes. No listener in Phase 9 resolves a hit
 or accesses SurvivalState; the signal records AI intent only.
 
-Known limits: walls do not block perception; there is no vision cone, target
-memory, hearing, noise, wander/search/investigate state, Zombie separation,
-horde behavior, spawning, population simulation, off-screen simulation, bites,
-scratches, loot, animation, sound or persistence. The Player wound layer is
-added separately in Phase 13; Zombie wounds and injury localization remain
-deferred. Health and base melee parameters are defined by Phase 10 below.
+Current limits: the demo uses simple wall raycasts and a fixed small-town
+population. Zombies do not use group coordination, advanced path planning,
+localized injuries, animation or persistence. Health and base melee parameters
+are defined by Phase 10 below.
 
 ### Combat (Phase 10)
 
@@ -181,6 +182,51 @@ reports an incomplete rollback. WoundState clamps reduction at zero, so an
 oversized effect stops bleeding without producing a negative rate. Combat does
 not own treatment rules; Inventory does not know about Wounds; no UI or
 persistence is added.
+
+### Infection and Injury (Phases 15-16)
+
+Player-local InfectionComponent and InjuryComponent subscribe to WoundComponent's
+creation signal and create state keyed by the exact wound UUID. Both sample the
+existing GameClock, not wall-clock time. Infection progression is risk-scaled;
+above a threshold it gradually reduces Health through a continuous-damage path
+that does not emit another damage event or create recursive Wounds. InjuryState
+tracks severity, pain, fracture and recovery; PlayerController reads the
+strongest movement penalty. TreatmentService supports bleeding profiles and
+infection-only antibiotic profiles, and removes the requested ItemInstance only
+when the selected wound has a matching treatable condition. Painkillers,
+infection contagion and detailed anatomy remain future work.
+
+### Noise, Perception, Population and World (Phases 17-24)
+
+DemoWorld owns a NoiseSystem and ZombiePopulationController. NoiseEvent is a
+validated transient value with origin, radius, source and optional emitter;
+listeners calculate linear distance falloff. Melee and ranged attacks emit
+noise, while Zombies combine vision-cone/line-of-sight checks, target memory,
+investigation and search. The population controller applies a small cap and
+distance-based full/simplified/dormant tiers, with simplified actors assigned
+staggered update phases. Dormant actors remain resident; unload and persistence
+belong to later milestones.
+
+WorldGrid owns no scene state and converts between world positions, cells and
+chunk coordinates. The Survival Demo reads `data/world/demo_town.json`, validates
+room/furniture loot references, and uses a local seeded RNG for house selection,
+loot and Zombie spawn order. Three compact buildings contain named rooms,
+openable doors/windows and profile-driven containers. This is a bounded
+semi-procedural test region; there are no streamed chunks or general-purpose
+building templates yet.
+
+### HUD, Equipment and Weapons (Phases 25-28)
+
+DemoHUD presents needs, carried mass, wound state, Player inventory and a nearby
+Container. Transfers use InventoryTransfer; consumables and wound treatment use
+their existing services. EquipmentComponent stores slot-to-instance IDs while
+Inventory remains the sole ItemInstance owner. Hands routes a melee weapon to
+PlayerMeleeComponent or a ranged weapon to RangedWeaponComponent. Melee target
+selection applies a facing arc and uses weapon range/cooldown; accepted hits
+apply a short stagger and noise. RangedWeaponComponent consumes individual ammo
+instances when reloading and launches a collision-based CombatProjectile that
+resolves through CombatService. Ammo loaded in magazines, equipment slots and
+world state are not serialized yet.
 
 ### Data
 

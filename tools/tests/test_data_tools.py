@@ -69,6 +69,37 @@ class DataToolTests(unittest.TestCase):
         self.write("weapons/weapons.json", [weapon, dict(weapon, id="another_weapon")])
         self.assertNotEqual(self.run_tool("validate_references").returncode, 0)
 
+    def test_ranged_weapon_schema_and_ammunition_reference(self):
+        self.write("items/ammunition.json", [{"type": "item", "id": "pistol_round", "name": "Pistol round",
+                                               "category": "ammo", "mass": 0.01, "materials": ["steel"]}])
+        ranged = {"type": "weapon", "id": "pipe_pistol_weapon", "item_id": "knife", "kind": "ranged",
+                  "ammo_item_id": "pistol_round", "damage": 20, "range": 400, "attack_interval": 0.6,
+                  "magazine_size": 6, "reload_time": 1.0, "noise_radius": 500, "projectile_speed": 600}
+        self.write("weapons/weapons.json", [ranged])
+        for tool in TOOLS:
+            result = self.run_tool(tool)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.write("weapons/weapons.json", [dict(ranged, ammo_item_id="missing_ammo")])
+        self.assertNotEqual(self.run_tool("validate_references").returncode, 0)
+        self.write("weapons/weapons.json", [dict(ranged, magazine_size=0)])
+        self.assertNotEqual(self.run_tool("validate_references").returncode, 0)
+
+    def test_demo_world_rooms_furniture_and_loot_references(self):
+        layout = {"version": 1, "bounds": [1200, 900],
+                  "building_sites": [[100, 150], [400, 150], [800, 400]],
+                  "room_definitions": [{"id": "kitchen", "name": "Kitchen",
+                                        "furniture": [{"id": "cupboard", "position": [-20, 15],
+                                                       "loot_profile_id": "loot_test"}]}],
+                  "zombie_spawn_sites": [[80, 70], [500, 700]], "extraction": [1100, 800]}
+        self.write("world/demo_town.json", layout)
+        result = self.run_tool("validate_references")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        layout["room_definitions"][0]["furniture"][0]["loot_profile_id"] = "missing_loot"
+        self.write("world/demo_town.json", layout)
+        result = self.run_tool("validate_references")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unknown loot profile", result.stdout + result.stderr)
+
     def test_medical_profile_schema_mapping_and_report(self):
         profile = {"type": "medical", "id": "bandage_medical", "item_id": "knife",
                    "bleeding_reduction_per_game_hour": 0.75}
@@ -80,6 +111,10 @@ class DataToolTests(unittest.TestCase):
         report = self.run_tool("content_report").stdout
         self.assertIn("Medical: 1", report)
         self.assertIn("Total Definitions: 6", report)
+        antibiotic = {"type": "medical", "id": "antibiotic_medical", "item_id": "knife",
+                      "infection_reduction_per_game_hour": 10.0}
+        self.write("medical/medical.json", [antibiotic])
+        self.assertEqual(self.run_tool("validate_references").returncode, 0)
         for effect in (0, -0.1, True, "fast", float("inf")):
             self.write("medical/medical.json", [dict(profile, bleeding_reduction_per_game_hour=effect)])
             self.assertNotEqual(self.run_tool("validate_references").returncode, 0)
