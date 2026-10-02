@@ -27,6 +27,8 @@ Phase 12 adds local lifecycle reactions to Health depletion. Player defeat
 shuts down Player gameplay while preserving its node and Inventory; a composed
 CreatureDeathComponent replaces a Zombie with a non-blocking Corpse only after
 the Corpse is initialized and added to the world.
+Phase 13 adds Player WoundState records from accepted damage and advances their
+bleeding on logical GameClock time.
 
 Gameplay Data
 -> Data Registry
@@ -49,6 +51,8 @@ Creature JSON
 -> DamageEvent
 -> DamageReceiver
    -> PlayerDamageReceiver -> SurvivalState.health
+                         -> damage_received -> WoundComponent -> WoundState[]
+                         -> logical-time bleeding -> SurvivalState.health
    -> CreatureHealthComponent -> Creature runtime health
                          ↓ health_depleted
                   Lifecycle Components
@@ -81,8 +85,9 @@ or accesses SurvivalState; the signal records AI intent only.
 Known limits: walls do not block perception; there is no vision cone, target
 memory, hearing, noise, wander/search/investigate state, Zombie separation,
 horde behavior, spawning, population simulation, off-screen simulation, bites,
-scratches, wounds, infection, loot, animation, sound or persistence. Health and
-base melee parameters are now defined by Phase 10 below.
+scratches, loot, animation, sound or persistence. The Player wound layer is
+added separately in Phase 13; Zombie wounds and injury localization remain
+deferred. Health and base melee parameters are defined by Phase 10 below.
 
 ### Combat (Phase 10)
 
@@ -106,6 +111,8 @@ only by assemblies that opt into death and corpse lifecycle.
 AI owns Zombie attack timing and range. Combat owns resolution. DamageReceiver
 owns Health mutation. At this phase boundary there is no armor, damage types,
 wounds, infection, knockback, death behavior, combat UI or persistence.
+Phase 13 listens to PlayerDamageReceiver's accepted-damage signal; neither
+CombatService nor CreatureHealthComponent depends on Wound systems.
 
 ### Player Melee and Weapons (Phase 11)
 
@@ -145,6 +152,23 @@ Corpse is a non-blocking Interactable on the Interactable layer. It stores only
 `source_creature_definition_id` and an inspection counter/signal for the
 placeholder action. It has no Health, DamageReceiver, Inventory, Loot or
 Creature collision layer. Player defeat does not create a Player Corpse.
+
+### Wounds and Bleeding (Phase 13)
+
+PlayerDamageReceiver emits `damage_received` only after a valid DamageEvent has
+changed Health. The Player-local WoundComponent turns each event into a separate
+WoundState with a UUID v4 `wound_id` and a finite `bleeding_rate_per_game_hour`
+in `[0.0, 10.0]`. The initial rate is proportional to accepted damage and
+controlled by a component export; it is a development tuning value and capped
+at the WoundState maximum.
+
+WoundComponent samples GameClock elapsed time and sums the rates of active
+Wounds. It applies the resulting Health loss through
+`PlayerDamageReceiver.apply_bleeding_damage()`, which preserves the existing
+`health_depleted` signal path into PlayerDefeatComponent. WoundState supports a
+strict two-field runtime record and bounded bleeding reduction so later
+treatment can address one exact `wound_id`. This phase adds no save files,
+body-region localization, infection, pain, fractures, treatment items or UI.
 
 ### Data
 

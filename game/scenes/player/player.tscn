@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/interaction/interaction_component.gd" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/combat/player_damage_receiver.gd" id="7"]
 [ext_resource type="Script" path="res://scripts/player/player_melee_component.gd" id="8"]
 [ext_resource type="Script" path="res://scripts/lifecycle/player_defeat_component.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/wounds/wound_component.gd" id="10"]
 
 [sub_resource type="RectangleShape2D" id="PlayerShape"]
 size = Vector2(32, 32)
@@ -69,3 +70,6 @@ shape = SubResource("MeleeRange")
 
 [node name="PlayerDefeatComponent" type="Node" parent="."]
 script = ExtResource("9")
+
+[node name="WoundComponent" type="Node" parent="."]
+script = ExtResource("10")

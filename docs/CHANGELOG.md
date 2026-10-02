@@ -4,6 +4,9 @@
 
 ### Added
 
+- Player WoundState records with unique wound IDs, strict runtime serialization and bleeding reduction
+- Player WoundComponent creates a Wound for each accepted hit and applies GameClock-based blood loss through PlayerDamageReceiver
+- Wound foundation and Player/Combat bleeding integration tests
 - PlayerDefeatComponent shuts down Player movement, melee, interaction and Container access once Health depletes while preserving the Player node and Inventory
 - Optional CreatureDeathComponent transaction replaces a depleted Zombie with a non-blocking, inspectable Corpse; failed setup leaves the Zombie inert and present
 - Corpse metadata, placeholder inspection, death/corpse debug scene, lifecycle tests and persistence deferral notes

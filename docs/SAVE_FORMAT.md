@@ -135,6 +135,17 @@ Phase 12 Player defeated state, Creature-to-Corpse transitions and Corpse
 instances are runtime-only. Their persistence and restoration behavior remain
 deferred; no record fields or save version are introduced for them.
 
+## Phase 13 Wound Runtime Record
+
+Each WoundState exposes a strict runtime record with exactly `wound_id` (UUID v4
+String) and `bleeding_rate_per_game_hour` (finite number in `[0.0, 10.0]`). The
+record represents one Player Wound and its current bleeding rate; the
+WoundComponent owns the collection. Malformed, missing, unknown or invalid
+fields are rejected without changing the current Wound. This record is
+JSON-compatible preparation only: it does not add file I/O, Player persistence,
+or a versioned save format. Phase 30 is planned to include Wounds in Player
+save/load.
+
 ## Requirements
 
 Future saves should:

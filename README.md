@@ -133,6 +133,8 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' --script res://tests/unit/lifecycle/test_lifecycle_foundation.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/lifecycle/test_lifecycle_integration.gd
 & $godotExecutable --headless --path './game' res://debug/test_scenes/death_corpse_test.tscn --quit-after 4
+& $godotExecutable --headless --path './game' --script res://tests/unit/wounds/test_wound_foundation.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/wounds/test_wound_integration.gd
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
@@ -264,6 +266,15 @@ To check Player defeat, allow the Zombie to attack; defeat disables gameplay
 controls while preserving the Player and Inventory. Corpse inspection is only
 a placeholder; there is no death screen, Loot, item drop, respawn or persistence.
 
+## Run and Check Wounds and Bleeding
+
+Run the Wound foundation and integration test scripts above. They verify strict
+WoundState records, unique IDs, per-hit Player Wounds, bleeding-rate reduction,
+logical-time Health loss and the existing Player defeat transition. The Player
+scene includes WoundComponent; attacks in the combat, melee and death/corpse
+debug scenes therefore exercise the same runtime composition. There is no
+bandage item, treatment action, wound-location UI or save/load in this phase.
+
 ## Development Rules
 
 Read `AGENTS.md` before making significant changes.
@@ -308,9 +319,8 @@ WeaponDefinition maps existing Items to validated damage, range and interval
 values. PlayerMeleeComponent equips one exact Inventory ItemInstance, tracks
 Creature targets independently of interaction, and resolves Space-triggered
 attacks through CombatService. The `player_melee_test.tscn` scene seeds and
-equips a knife and places two Zombies in the test yard. Health depletion still
-does not create a corpse; armor, wounds, death, UI and persistence remain future
-work.
+equips a knife and places two Zombies in the test yard. Armor, hit regions,
+injuries, UI and persistence remain future work.
 
 Phase 12: Death and Corpse Lifecycle Foundation (complete)
 
@@ -320,6 +330,14 @@ and Inventory. Scenes that opt into CreatureDeathComponent convert depleted
 Zombies to non-blocking Corpses after successful initialization and placement;
 failed transitions leave the Zombie inert at zero Health. Corpses support only
 placeholder inspection and contain no Health, Inventory or Loot.
+
+Phase 13: Wound and Bleeding Foundation (complete)
+
+Each accepted Player hit creates an independently identified WoundState.
+WoundComponent advances each wound's bleeding rate on GameClock time and
+applies blood loss through PlayerDamageReceiver, preserving the existing defeat
+lifecycle. Wound runtime records are strict and JSON-compatible, but there is
+no treatment, infection, body-region localization, UI or disk persistence.
 
 Phase 0B adds independent item instances, UUID identities, validated condition
 changes and JSON-compatible serialization/reconstruction. Usage and record
@@ -339,8 +357,9 @@ and all-or-nothing capacity-aware Container population. Phase 8 adds
 ConsumableDefinition loading and atomic consumption of an exact Inventory item
 instance. Phase 9 adds a generic Creature registry and Zombie AI/navigation
 foundation. Phase 10 adds the first damage resolution pipeline, Phase 11 adds
-Player melee, and Phase 12 adds defeat and Creature-to-Corpse lifecycle rules.
-Map placement, UI and persistence remain deferred.
+Player melee, Phase 12 adds defeat and Creature-to-Corpse lifecycle rules, and
+Phase 13 adds Player Wounds and logical-time bleeding. Map placement, treatment,
+UI and persistence remain deferred.
 
 ## Project Status
 
@@ -349,9 +368,9 @@ interaction, Inventory and WorldItem pickup/drop foundations are implemented.
 Container access, Inventory transfers and the Loot foundation are implemented.
 The Phase 7 GameClock and Player survival foundations, Phase 8 Consumable
 Foundation, Phase 9 Creature/Zombie Foundation, Phase 10 Combat Foundation and
-Phase 11 Player Melee / Weapon Foundation and Phase 12 Death / Corpse Lifecycle
-are implemented. No
-Inventory or Container UI, map-based Loot placement or full save/load is implemented.
+Phase 11 Player Melee / Weapon Foundation, Phase 12 Death / Corpse Lifecycle
+and Phase 13 Wound / Bleeding Foundation are implemented. No Inventory or
+Container UI, map-based Loot placement or full save/load is implemented.
 Existing engine settings are preserved; the project uses DataRegistry and GameClock
 Autoloads and the Player Foundation test-world entry scene. See [Data Schema](docs/DATA_SCHEMA.md) and
 [Architecture](docs/ARCHITECTURE.md) for the current contract.
@@ -363,4 +382,4 @@ The current Godot executables and VS Code shortcut live outside this repository.
 The first-stage empty directories exist locally. Git does not preserve empty
 directories; create them as needed after cloning. No placeholder files are required.
 
-Recommended next phase: Phase 13 - Wound and Bleeding Foundation.
+Recommended next phase: Phase 14 - Medical Treatment Foundation.

@@ -119,8 +119,9 @@ support WorldItems, Container UI, charges or partial use.
 
 PlayerMeleeComponent owns input timing and target selection. CombatService owns
 damage resolution, and CreatureHealthComponent owns health mutation. Equipment
-slots, condition loss, attack animation, UI, wounds and death are outside this
-foundation.
+slots, condition loss, attack animation and UI are outside this foundation.
+Phase 13 adds Player Wounds after accepted damage; it does not add hit-region
+localization to Weapon or Combat data.
 
 ## Creature Definitions
 

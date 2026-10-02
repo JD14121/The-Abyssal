@@ -204,53 +204,118 @@ Phase 10 — Combat Foundation follows.
 - **Complete** — repeated transitions are idempotent; missing/invalid scene, invalid parent and invalid metadata leave the zero-Health Zombie inert and present
 - Corpse Loot, Player death presentation, wounds, persistence and respawn remain deferred
 
-## Phase 13 - Wound and Bleeding Foundation (Recommended Next)
+## Phase 13 - Wound and Bleeding Foundation (Complete)
 
-- Basic body regions and wound records
-- Wound events from resolved damage
-- Bounded bleeding rate and Health loss over time
-- Basic bandage treatment
-- Infection, zombification, fractures and pain remain deferred
+- Player DamageReceiver publishes accepted damage without adding wound rules to CombatService
+- Each accepted Player hit creates an independent WoundState with a stable runtime `wound_id`
+- WoundState validates and serializes its identity and finite non-negative bleeding rate
+- Player WoundComponent advances bleeding using GameClock time and applies Health loss through PlayerDamageReceiver
+- Lethal blood loss uses the existing Player defeat signal and lifecycle
+- Body-region localization, treatment, infection, pain, fractures, UI and disk persistence remain deferred
 
 ## Phase 14 - Medical and Bandage Foundation
 
-- Treatment items and wound care rules
-- Keep infection and advanced medicine deferred
+- Medical item definitions and treatment service
+- Treat one selected Wound by `wound_id`; first effects reduce or stop bleeding
+- Consume the exact Inventory item through existing ownership rules
+- Keep infection, pain, fracture, UI and persistence deferred
 
 ## Phase 15 - Infection and Disease Foundation
 
-- Explicit infection progression and disease outcomes
+- Wound infection risk and disease progression
+- Basic antibiotics and treatment rules
 
-## Phase 16 - Noise and Advanced Perception
+## Phase 16 - Advanced Injury Foundation
 
-- Hearing, investigation and search behavior
+- Pain, fractures, movement penalties, severity and healing progression
 
-## Phase 17 - Zombie Spawning and Population
+## Phase 17 - Noise Foundation
 
-- Controlled spawn points and population boundaries
+- Shared NoiseEvent and world propagation
+- Player and world-action noise sources; Zombie hearing
 
-## Phase 18 - World
+## Phase 18 - Advanced Zombie Perception
 
-- building templates
-- chunks
-- map generation
-- world persistence
+- Vision cone and line of sight
+- Hearing, last known position, investigate, search and lost-target behavior
 
----
+## Phase 19 - Zombie Population and Spawning
 
-## Phase 19 - Advanced Simulation
+- Spawn zones and population rules
+- Activation and despawn boundaries
 
-Future systems:
+## Phase 20 - Zombie Performance and Simulation Scaling
 
-- wounds
-- bleeding
-- pain
-- infection
-- temperature
-- fatigue
-- weather
-- crafting
-- skills
+- Active and simplified simulation ranges
+- Staggered AI ticks and off-screen state updates
+
+## Phase 21 - World Foundation
+
+- World ownership, region/chunk coordinates and replacement of debug-only world composition
+
+## Phase 22 - Building and Interior Foundation
+
+- Buildings, rooms, doors, windows, furniture and Containers
+
+## Phase 23 - Data-driven Loot Placement
+
+- Connect building/room/furniture/container types to Loot profiles
+
+## Phase 24 - Procedural or Semi-procedural World Generation
+
+- Seeded roads, zones, buildings, interiors, furniture, Loot and population
+
+## Phase 25 - Inventory UI
+
+- Player and Container item lists, selection, transfer, weight and basic details
+
+## Phase 26 - Equipment Foundation
+
+- Equipment slots, hands, clothing and equipped-item state
+
+## Phase 27 - Combat Interaction Refinement
+
+- Facing, attack arc, hit area, weapon reach, animation timing and stagger
+
+## Phase 28 - Ranged Weapons
+
+- Guns, ammunition, magazines, reloading, projectile/hitscan and gunshot Noise
+
+## Phase 29 - Save Foundation
+
+- SaveManager, manifest/version, atomic writes and load validation
+
+## Phase 30 - Player Save and Load
+
+- Position, Inventory, equipment, Health, survival state and Wounds
+
+## Phase 31 - World State Persistence
+
+- Containers, WorldItems, dead Creatures, Corpses, doors, windows and Loot state
+
+## Phase 32 - Chunk Persistence and Streaming
+
+- Nearby chunk loading, distant chunk unloading and changed-state serialization
+
+## Phase 33 - Weather
+
+- Rain, clouds, wind and shared weather state
+
+## Phase 34 - Temperature
+
+- Body/environment temperature, clothing insulation and wetness
+
+## Phase 35 - Fatigue and Sleep
+
+- Fatigue, sleep, rest and sleep quality
+
+## Phase 36 - Crafting Foundation
+
+- Recipe definitions, requirements, tools, components and results
+
+## Phase 37 - Fire, Power and Water
+
+- Environmental simulation for fire, electricity, water and decay
 
 ---
 
