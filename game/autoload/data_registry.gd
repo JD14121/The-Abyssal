@@ -9,6 +9,7 @@ const Loot = preload("res://scripts/data/definitions/loot_definition.gd")
 const Consumable = preload("res://scripts/data/definitions/consumable_definition.gd")
 const Creature = preload("res://scripts/data/definitions/creature_definition.gd")
 const Weapon = preload("res://scripts/data/definitions/weapon_definition.gd")
+const Medical = preload("res://scripts/data/definitions/medical_definition.gd")
 
 var _materials: Dictionary[StringName, MaterialData] = {}
 var _items: Dictionary[StringName, Item] = {}
@@ -18,6 +19,8 @@ var _consumables_by_item_id: Dictionary[StringName, Consumable] = {}
 var _creatures: Dictionary[StringName, Creature] = {}
 var _weapons: Dictionary[StringName, Weapon] = {}
 var _weapons_by_item_id: Dictionary[StringName, Weapon] = {}
+var _medical: Dictionary[StringName, Medical] = {}
+var _medical_by_item_id: Dictionary[StringName, Medical] = {}
 var _loaded: bool = false
 var _errors: Array[String] = []
 var _warnings: Array[String] = []
@@ -38,6 +41,8 @@ func load_all_data(data_root: String = "res://data") -> bool:
 	_creatures.clear()
 	_weapons.clear()
 	_weapons_by_item_id.clear()
+	_medical.clear()
+	_medical_by_item_id.clear()
 	_errors.clear()
 	_warnings.clear()
 	var started := Time.get_ticks_msec()
@@ -51,6 +56,8 @@ func load_all_data(data_root: String = "res://data") -> bool:
 	var pending_creatures: Dictionary[StringName, Creature] = {}
 	var pending_weapons: Dictionary[StringName, Weapon] = {}
 	var pending_weapons_by_item_id: Dictionary[StringName, Weapon] = {}
+	var pending_medical: Dictionary[StringName, Medical] = {}
+	var pending_medical_by_item_id: Dictionary[StringName, Medical] = {}
 	print("[DataRegistry] Starting data load: " + data_root)
 	var order_path := data_root.path_join("core/load_order.json")
 	var order: Dictionary = loader.read_json(order_path)
@@ -86,7 +93,10 @@ func load_all_data(data_root: String = "res://data") -> bool:
 						"weapons":
 							registered = pending_weapons
 							references = pending_items
-					if not validator.validate(entry, Validator.GROUP_TYPES[group], "%s[%d]" % [path, index], registered, references, pending_consumables_by_item_id, pending_weapons_by_item_id):
+						"medical":
+							registered = pending_medical
+							references = pending_items
+					if not validator.validate(entry, Validator.GROUP_TYPES[group], "%s[%d]" % [path, index], registered, references, pending_consumables_by_item_id, pending_weapons_by_item_id, pending_medical_by_item_id):
 						continue
 					match group:
 						"materials":
@@ -109,6 +119,10 @@ func load_all_data(data_root: String = "res://data") -> bool:
 							var weapon := Weapon.new(entry, path)
 							pending_weapons[weapon.id] = weapon
 							pending_weapons_by_item_id[weapon.item_id] = weapon
+						"medical":
+							var medical := Medical.new(entry, path)
+							pending_medical[medical.id] = medical
+							pending_medical_by_item_id[medical.item_id] = medical
 	_errors.append_array(loader.errors)
 	_errors.append_array(validator.errors)
 	_warnings.append_array(validator.warnings)
@@ -127,8 +141,10 @@ func load_all_data(data_root: String = "res://data") -> bool:
 	_creatures = pending_creatures
 	_weapons = pending_weapons
 	_weapons_by_item_id = pending_weapons_by_item_id
+	_medical = pending_medical
+	_medical_by_item_id = pending_medical_by_item_id
 	_loaded = true
-	print("[DataRegistry] Ready. Materials: %d; Items: %d; Loot: %d; Consumables: %d; Creatures: %d; Weapons: %d; Files: %d; Errors: 0; Warnings: %d; Duration: %d ms" % [_materials.size(), _items.size(), _loot.size(), _consumables.size(), _creatures.size(), _weapons.size(), loader.file_count, _warnings.size(), Time.get_ticks_msec() - started])
+	print("[DataRegistry] Ready. Materials: %d; Items: %d; Loot: %d; Consumables: %d; Creatures: %d; Weapons: %d; Medical: %d; Files: %d; Errors: 0; Warnings: %d; Duration: %d ms" % [_materials.size(), _items.size(), _loot.size(), _consumables.size(), _creatures.size(), _weapons.size(), _medical.size(), loader.file_count, _warnings.size(), Time.get_ticks_msec() - started])
 	return true
 
 
@@ -214,6 +230,22 @@ func get_weapon_for_item(item_id: StringName) -> Weapon:
 
 func get_consumable_for_item(item_id: StringName) -> Consumable:
 	return _consumables_by_item_id.get(item_id)
+
+
+func get_medical(id: StringName) -> Medical:
+	return _medical.get(id)
+
+
+func has_medical(id: StringName) -> bool:
+	return _medical.has(id)
+
+
+func get_all_medical() -> Array:
+	return _medical.values()
+
+
+func get_medical_for_item(item_id: StringName) -> Medical:
+	return _medical_by_item_id.get(item_id)
 
 
 func get_errors() -> Array[String]:

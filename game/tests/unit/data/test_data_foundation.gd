@@ -105,8 +105,12 @@ func _ids(definitions: Array) -> Array:
 
 func _prepare() -> void:
 	_remove_tree(scratch)
+	var empty_groups := ["consumables/consumables.json", "creatures/creatures.json",
+		"weapons/weapons.json", "medical/medical.json"]
 	for relative in ["core/load_order.json", "materials/materials.json", "items/items.json", "loot/loot.json"]:
 		_write(relative, FileAccess.get_file_as_string(FIXTURES + "valid/" + relative))
+	for relative in empty_groups:
+		_write(relative, "[]")
 
 
 func _write(relative: String, content: String) -> void:

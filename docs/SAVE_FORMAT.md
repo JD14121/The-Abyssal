@@ -146,6 +146,11 @@ JSON-compatible preparation only: it does not add file I/O, Player persistence,
 or a versioned save format. Phase 30 is planned to include Wounds in Player
 save/load.
 
+Phase 14 MedicalDefinition profiles are static content and add no treatment
+runtime record. Treatment changes the existing Wound bleeding rate and consumes
+an ItemInstance from Inventory; saving and restoring those runtime states
+remains deferred.
+
 ## Requirements
 
 Future saves should:

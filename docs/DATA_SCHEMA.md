@@ -33,8 +33,9 @@ water_bottle_1l
 4. Consumable
 5. Creature
 6. Weapon
+7. Medical
 
-Consumables were added in Phase 8 and Weapons in Phase 11. Additional types will be added incrementally.
+Consumables were added in Phase 8, Weapons in Phase 11 and Medical profiles in Phase 14. Additional types will be added incrementally.
 
 ## Files and Load Order
 
@@ -46,21 +47,21 @@ invalid escapes and malformed numeric tokens, are rejected.
 `game/data/core/load_order.json` contains:
 
 ```json
-{"groups": ["materials", "items", "loot", "consumables", "creatures", "weapons"]}
+{"groups": ["materials", "items", "loot", "consumables", "creatures", "weapons", "medical"]}
 ```
 
 Production manifests list each group exactly once in dependency order. The
 supported production order is `materials`, `items`, `loot`, `consumables`,
-`creatures`, then `weapons`. Previous three-, four-, and five-group manifests
+`creatures`, `weapons`, then `medical`. Previous shorter manifests
 remain accepted for isolated earlier-phase fixtures. Missing, reordered, duplicated or unknown
 groups are fatal. The manifest is configuration, not a gameplay definition, so
 it needs no `type` or `id`.
 
-Items load before Loot and Consumables so their `item_id` references can be
-checked against an existing ItemDefinition. Consumables load after Loot; Loot
-has no Consumable dependency. The loader recursively reads lowercase `.json`
-Creature definitions have no references to earlier data groups. Weapon data
-loads last and references existing Items. The loader recursively reads lowercase
+Items load before Loot, Consumables, Weapons and Medical profiles so their
+`item_id` references can be checked against an existing ItemDefinition.
+Consumables load after Loot; Loot has no Consumable dependency. Creature
+definitions have no references to earlier data groups. Weapon and Medical data
+load last and reference existing Items. The loader recursively reads lowercase
 `.json` files in each listed group. Paths are sorted lexically within each group
 and array order is retained.
 Directories must exist and be readable. Directory symbolic links are rejected.
@@ -264,13 +265,14 @@ The implemented pipeline detects:
 
 - malformed JSON
 - duplicate IDs
-- duplicate Item-to-Consumable mappings
+- duplicate Item-to-Consumable, Item-to-Weapon or Item-to-Medical mappings
 - missing required fields
 - invalid field types
 - unresolved references
 - unknown or misplaced definition types
 - negative or non-finite density/mass
 - non-finite Consumable effects
+- non-finite or non-positive Medical bleeding reduction
 - non-finite or non-positive Creature movement/perception/cadence values
 - non-finite or non-positive Creature `max_health` and `melee_damage`
 - Creature attack range larger than its vision range
@@ -320,3 +322,19 @@ attack interval. It does not store runtime condition or equipment state.
 The three numeric values must be finite and greater than zero. Each Item can
 map to at most one Weapon; an Item may also have a Consumable profile. Runtime
 equipment stores the exact Inventory `instance_id`.
+
+## Medical
+
+MedicalDefinition maps one existing Item to a treatment effect. Phase 14 uses
+`bleeding_reduction_per_game_hour`; the value must be finite and greater than
+zero, and the target Wound clamps its result at zero. Each Item can map to at
+most one Medical profile. Profiles contain static data only.
+
+```json
+{
+  "type": "medical",
+  "id": "medical_clean_bandage",
+  "item_id": "clean_bandage",
+  "bleeding_reduction_per_game_hour": 0.75
+}
+```

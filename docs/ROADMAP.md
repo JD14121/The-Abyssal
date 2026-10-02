@@ -211,14 +211,14 @@ Phase 10 — Combat Foundation follows.
 - WoundState validates and serializes its identity and finite non-negative bleeding rate
 - Player WoundComponent advances bleeding using GameClock time and applies Health loss through PlayerDamageReceiver
 - Lethal blood loss uses the existing Player defeat signal and lifecycle
-- Body-region localization, treatment, infection, pain, fractures, UI and disk persistence remain deferred
+- Body-region localization, infection, pain, fractures, UI and disk persistence remain deferred
 
-## Phase 14 - Medical and Bandage Foundation
+## Phase 14 - Medical and Bandage Foundation (Complete)
 
-- Medical item definitions and treatment service
-- Treat one selected Wound by `wound_id`; first effects reduce or stop bleeding
-- Consume the exact Inventory item through existing ownership rules
-- Keep infection, pain, fracture, UI and persistence deferred
+- MedicalDefinition static data maps a treatment Item to bleeding reduction
+- TreatmentService applies a bandage to one exact `wound_id`
+- Successful treatment consumes only the requested Inventory `instance_id`; invalid targets and rejected effects preserve it
+- Infection, pain, fractures, UI and persistence remain deferred
 
 ## Phase 15 - Infection and Disease Foundation
 

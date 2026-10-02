@@ -1,7 +1,7 @@
 extends RefCounted
 ## Central schema rules for supported static definition types.
 
-const GROUP_TYPES := {"materials": "material", "items": "item", "loot": "loot", "consumables": "consumable", "creatures": "creature", "weapons": "weapon"}
+const GROUP_TYPES := {"materials": "material", "items": "item", "loot": "loot", "consumables": "consumable", "creatures": "creature", "weapons": "weapon", "medical": "medical"}
 const COMMON_FIELDS := ["type", "id", "name"]
 const MATERIAL_FIELDS := ["density", "flammable"]
 const ITEM_FIELDS := ["category", "mass", "materials"]
@@ -10,6 +10,7 @@ const LOOT_ENTRY_FIELDS := ["item_id", "weight", "chance", "min_quantity", "max_
 const CONSUMABLE_FIELDS := ["item_id", "hunger_delta", "thirst_delta"]
 const CREATURE_FIELDS := ["move_speed", "vision_range", "attack_range", "attack_interval", "max_health", "melee_damage"]
 const WEAPON_FIELDS := ["item_id", "melee_damage", "melee_range", "attack_interval"]
+const MEDICAL_FIELDS := ["item_id", "bleeding_reduction_per_game_hour"]
 
 var errors: Array[String] = []
 var warnings: Array[String] = []
@@ -17,9 +18,9 @@ var _id_pattern := RegEx.create_from_string("^[a-z][a-z0-9_]*$")
 
 
 func validate_load_order(value: Variant, source: String) -> bool:
-	var supported_orders := [["materials", "items", "loot"], ["materials", "items", "loot", "consumables"], ["materials", "items", "loot", "consumables", "creatures"], ["materials", "items", "loot", "consumables", "creatures", "weapons"]]
+	var supported_orders := [["materials", "items", "loot"], ["materials", "items", "loot", "consumables"], ["materials", "items", "loot", "consumables", "creatures"], ["materials", "items", "loot", "consumables", "creatures", "weapons"], ["materials", "items", "loot", "consumables", "creatures", "weapons", "medical"]]
 	if not value is Dictionary or value.get("groups") not in supported_orders:
-		errors.append("%s | field groups: expected a supported ordered prefix from materials, items, loot, consumables, creatures, weapons" % source)
+		errors.append("%s | field groups: expected a supported ordered prefix from materials, items, loot, consumables, creatures, weapons, medical" % source)
 		return false
 	for field in value:
 		if field != "groups":
@@ -37,14 +38,14 @@ func entries(value: Variant, source: String) -> Array:
 
 
 func validate(entry: Variant, expected_type: String, source: String,
-		registered: Dictionary, known_materials: Dictionary, item_mappings: Dictionary = {}, weapon_mappings: Dictionary = {}) -> bool:
+		registered: Dictionary, known_materials: Dictionary, item_mappings: Dictionary = {}, weapon_mappings: Dictionary = {}, medical_mappings: Dictionary = {}) -> bool:
 	var previous_errors := errors.size()
 	if not entry is Dictionary:
 		errors.append("%s | definition: expected an object" % source)
 		return false
 	var context := "%s | %s:%s" % [source, str(entry.get("type", expected_type)), str(entry.get("id", "<missing>"))]
 	var allowed: Array = []
-	if expected_type in ["loot", "consumable", "weapon"]:
+	if expected_type in ["loot", "consumable", "weapon", "medical"]:
 		_required_string(entry, "type", context)
 		_required_string(entry, "id", context)
 		if expected_type == "loot":
@@ -53,9 +54,12 @@ func validate(entry: Variant, expected_type: String, source: String,
 		elif expected_type == "consumable":
 			allowed = ["type", "id"] + CONSUMABLE_FIELDS
 			_validate_consumable(entry, context, known_materials, item_mappings)
-		else:
+		elif expected_type == "weapon":
 			allowed = ["type", "id"] + WEAPON_FIELDS
 			_validate_weapon(entry, context, known_materials, weapon_mappings)
+		else:
+			allowed = ["type", "id"] + MEDICAL_FIELDS
+			_validate_medical(entry, context, known_materials, medical_mappings)
 	else:
 		for field in COMMON_FIELDS:
 			_required_string(entry, field, context)
@@ -145,6 +149,23 @@ func _validate_weapon(entry: Dictionary, context: String, known_items: Dictionar
 			errors.append("%s | field %s: missing required field" % [context, field])
 		elif not _is_finite_number(entry[field]) or float(entry[field]) <= 0.0:
 			errors.append("%s | field %s: expected finite number > 0" % [context, field])
+
+
+func _validate_medical(entry: Dictionary, context: String, known_items: Dictionary, medical_mappings: Dictionary) -> void:
+	if not entry.has("item_id"):
+		errors.append("%s | field item_id: missing required field" % context)
+	elif not entry.item_id is String or entry.item_id.strip_edges().is_empty():
+		errors.append("%s | field item_id: expected non-empty string" % context)
+	else:
+		var item_id := StringName(entry.item_id)
+		if not known_items.has(item_id):
+			errors.append("%s | field item_id: unknown item ID %s" % [context, entry.item_id])
+		if medical_mappings.has(item_id):
+			errors.append("%s | field item_id: Item %s already maps to Medical profile defined in %s" % [context, entry.item_id, medical_mappings[item_id].source_file])
+	if not entry.has("bleeding_reduction_per_game_hour"):
+		errors.append("%s | field bleeding_reduction_per_game_hour: missing required field" % context)
+	elif not _is_finite_number(entry.bleeding_reduction_per_game_hour) or float(entry.bleeding_reduction_per_game_hour) <= 0.0:
+		errors.append("%s | field bleeding_reduction_per_game_hour: expected finite number > 0" % context)
 
 
 func _validate_loot(entry: Dictionary, context: String, known_items: Dictionary) -> void:

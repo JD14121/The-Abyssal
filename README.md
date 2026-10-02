@@ -90,8 +90,8 @@ python -m unittest discover -s tools/tests -v
 
 All tools return 0 on success and 1 for content errors. `--data-root PATH`
 selects another data root containing `core/`, `materials/`, `items/` and `loot/`;
-the production six-group manifest also requires `consumables/`, `creatures/`
-and `weapons/`.
+the production seven-group manifest also requires `consumables/`, `creatures/`,
+`weapons/` and `medical/`.
 The default root is resolved relative to the tools, independent of the working directory.
 The syntax checker scans all JSON recursively. The other three tools validate
 the complete supported schemas, IDs and references before reporting success.
@@ -135,17 +135,20 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' res://debug/test_scenes/death_corpse_test.tscn --quit-after 4
 & $godotExecutable --headless --path './game' --script res://tests/unit/wounds/test_wound_foundation.gd
 & $godotExecutable --headless --path './game' --script res://tests/unit/wounds/test_wound_integration.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/medical/test_medical_registry.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/medical/test_medical_treatment.gd
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
 as well as its exit code. The second starts the real Autoload and the Player
-Foundation test world. Expected output includes `Materials: 5; Items: 10; Loot: 9; Consumables: 2; Creatures: 2; Weapons: 1`
+Foundation test world. Expected output includes `Materials: 5; Items: 10; Loot: 9; Consumables: 2; Creatures: 2; Weapons: 1; Medical: 1`
 and `[PlayerFoundation] Test world ready`. Startup terminates with exit code 1
 if data validation fails. The original data-only scene remains available at
 `res://scenes/bootstrap/data_smoke_test.tscn`.
 
 The test commands run static-data, runtime-item, player, interaction,
-Inventory, WorldItem, transfer and Container tests and return nonzero if any check fails. The runtime suite also creates 10,000 live
+Inventory, WorldItem, transfer, Container, survival, combat, lifecycle, Wound
+and Medical tests and return nonzero if any check fails. The runtime suite also creates 10,000 live
 instances across two factories to check UUID uniqueness and format.
 Negative cases intentionally emit errors/warnings; the final check summary
 distinguishes expected rejections from test failures. Tests use isolated temporary
@@ -268,12 +271,11 @@ a placeholder; there is no death screen, Loot, item drop, respawn or persistence
 
 ## Run and Check Wounds and Bleeding
 
-Run the Wound foundation and integration test scripts above. They verify strict
-WoundState records, unique IDs, per-hit Player Wounds, bleeding-rate reduction,
-logical-time Health loss and the existing Player defeat transition. The Player
-scene includes WoundComponent; attacks in the combat, melee and death/corpse
-debug scenes therefore exercise the same runtime composition. There is no
-bandage item, treatment action, wound-location UI or save/load in this phase.
+Run the Wound and Medical registry/treatment test scripts. They verify strict
+WoundState records, unique IDs, per-hit Player Wounds, logical-time Health loss,
+and exact-wound treatment that consumes only the requested bandage on success.
+Treatment can partially reduce or stop bleeding. It does not add infection,
+wound-location UI, treatment animation or save/load.
 
 ## Development Rules
 
@@ -382,4 +384,10 @@ The current Godot executables and VS Code shortcut live outside this repository.
 The first-stage empty directories exist locally. Git does not preserve empty
 directories; create them as needed after cloning. No placeholder files are required.
 
-Recommended next phase: Phase 14 - Medical Treatment Foundation.
+Phase 14: Medical Treatment Foundation (complete)
+
+MedicalDefinition maps a treatment Item to a validated bleeding reduction.
+TreatmentService targets one `wound_id` and consumes the requested exact
+Inventory instance only after successful treatment. The full Phase 0–14
+Combat Survival Slice is recorded as [Milestone A](docs/MILESTONES.md).
+Next: Phase 15 - Infection and Disease Foundation.

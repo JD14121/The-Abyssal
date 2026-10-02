@@ -168,7 +168,19 @@ Wounds. It applies the resulting Health loss through
 `health_depleted` signal path into PlayerDefeatComponent. WoundState supports a
 strict two-field runtime record and bounded bleeding reduction so later
 treatment can address one exact `wound_id`. This phase adds no save files,
-body-region localization, infection, pain, fractures, treatment items or UI.
+body-region localization, infection, pain or fractures.
+
+### Medical Treatment (Phase 14)
+
+MedicalDefinition is static data mapping an Item ID to a finite positive
+bleeding reduction. TreatmentService receives the Player Inventory and
+WoundComponent, validates the exact Item `instance_id`, profile and bleeding
+`wound_id`, then removes that same Inventory reference and applies the effect.
+If the Wound rejects the mutation, it restores the same ItemInstance and
+reports an incomplete rollback. WoundState clamps reduction at zero, so an
+oversized effect stops bleeding without producing a negative rate. Combat does
+not own treatment rules; Inventory does not know about Wounds; no UI or
+persistence is added.
 
 ### Data
 

@@ -4,6 +4,10 @@
 
 ### Added
 
+- MedicalDefinition JSON schema, Item lookup indexes and validated Bandage profile
+- TreatmentService for exact `wound_id` bleeding treatment with exact Inventory ItemInstance consumption and rollback on rejected Wound mutation
+- Medical registry/treatment tests and Python Medical validation/reporting coverage
+- Milestone A Combat Survival Slice record
 - Player WoundState records with unique wound IDs, strict runtime serialization and bleeding reduction
 - Player WoundComponent creates a Wound for each accepted hit and applies GameClock-based blood loss through PlayerDamageReceiver
 - Wound foundation and Player/Combat bleeding integration tests

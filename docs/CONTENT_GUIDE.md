@@ -145,3 +145,18 @@ owns runtime targeting and state and never changes Health. Perception uses
 distance only, so walls do not block detection. Creature runtime Health belongs
 to CreatureHealthComponent. Armor, damage types, death, hearing, loot and
 persistence are not implemented.
+
+## Medical Profiles
+
+1. Define the bandage or other treatment Item under `game/data/items/`.
+2. Add a Medical profile under `game/data/medical/` with a unique `id`, the
+   existing `item_id`, and a finite positive
+   `bleeding_reduction_per_game_hour` value.
+3. Keep each Item mapped to at most one Medical profile. Item category does not
+   decide whether it can treat Wounds; the profile mapping does.
+4. Run all four Python data tools and the Medical Registry/Treatment tests.
+5. Treatment consumes the requested Inventory `instance_id` only after finding
+   the exact bleeding `wound_id` and applying the effect successfully.
+
+Phase 14 treats bleeding only. Infection, pain, fractures, charges, treatment
+animation, UI and persistence remain deferred.

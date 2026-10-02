@@ -15,7 +15,7 @@ import re
 
 
 DEFAULT_DATA_ROOT = Path(__file__).resolve().parents[1] / "game/data"
-GROUP_TYPES = {"materials": "material", "items": "item", "loot": "loot", "consumables": "consumable", "creatures": "creature", "weapons": "weapon"}
+GROUP_TYPES = {"materials": "material", "items": "item", "loot": "loot", "consumables": "consumable", "creatures": "creature", "weapons": "weapon", "medical": "medical"}
 ID_PATTERN = re.compile(r"[a-z][a-z0-9_]*", re.ASCII)
 COMMON_FIELDS = {"type", "id", "name"}
 TYPE_FIELDS = {
@@ -25,6 +25,7 @@ TYPE_FIELDS = {
     "consumable": {"item_id", "hunger_delta", "thirst_delta"},
     "creature": {"move_speed", "vision_range", "attack_range", "attack_interval", "max_health", "melee_damage"},
     "weapon": {"item_id", "melee_damage", "melee_range", "attack_interval"},
+    "medical": {"item_id", "bleeding_reduction_per_game_hour"},
 }
 
 
@@ -33,10 +34,11 @@ class ContentResult:
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     files: int = 0
-    definitions: dict[str, dict] = field(default_factory=lambda: {"material": {}, "item": {}, "loot": {}, "consumable": {}, "creature": {}, "weapon": {}})
+    definitions: dict[str, dict] = field(default_factory=lambda: {"material": {}, "item": {}, "loot": {}, "consumable": {}, "creature": {}, "weapon": {}, "medical": {}})
     sources: dict[tuple[str, str], str] = field(default_factory=dict)
     consumable_item_sources: dict[str, str] = field(default_factory=dict)
     weapon_item_sources: dict[str, str] = field(default_factory=dict)
+    medical_item_sources: dict[str, str] = field(default_factory=dict)
 
 
 def scan_json(directory: Path, result: ContentResult) -> list[Path]:
@@ -81,8 +83,8 @@ def validate_entry(entry, expected_type: str, source: str, result: ContentResult
     def error(field_name, reason):
         result.errors.append(f"{context} | field {field_name}: {reason}")
 
-    if expected_type in ("loot", "consumable", "weapon"):
-        required = ("type", "id") + (("item_id",) if expected_type == "consumable" else ())
+    if expected_type in ("loot", "consumable", "weapon", "medical"):
+        required = ("type", "id") + (("item_id",) if expected_type in ("consumable", "weapon", "medical") else ())
     else:
         required = ("type", "id", "name") + (("category",) if expected_type == "item" else ())
     for name in required:
@@ -141,6 +143,18 @@ def validate_entry(entry, expected_type: str, source: str, result: ContentResult
                 error(field_name, "missing required field")
             elif not _is_finite_number(value) or value <= 0:
                 error(field_name, "expected finite number > 0")
+    elif expected_type == "medical":
+        item_id = entry.get("item_id")
+        if isinstance(item_id, str) and item_id.strip():
+            if item_id not in result.definitions["item"]:
+                error("item_id", f"unknown item ID {item_id}")
+            if item_id in result.medical_item_sources:
+                error("item_id", f"duplicate Medical mapping for item ID {item_id}; first defined in {result.medical_item_sources[item_id]}")
+        effect = entry.get("bleeding_reduction_per_game_hour")
+        if "bleeding_reduction_per_game_hour" not in entry:
+            error("bleeding_reduction_per_game_hour", "missing required field")
+        elif not _is_finite_number(effect) or effect <= 0:
+            error("bleeding_reduction_per_game_hour", "expected finite number > 0")
     elif expected_type == "loot":
         _validate_loot(entry, context, result, error)
     elif expected_type == "consumable":
@@ -237,9 +251,10 @@ def load_content(root: Path) -> ContentResult:
         return result
     valid_orders = (["materials", "items", "loot"], ["materials", "items", "loot", "consumables"],
                     ["materials", "items", "loot", "consumables", "creatures"],
-                    ["materials", "items", "loot", "consumables", "creatures", "weapons"])
+                    ["materials", "items", "loot", "consumables", "creatures", "weapons"],
+                    ["materials", "items", "loot", "consumables", "creatures", "weapons", "medical"])
     if not isinstance(order, dict) or order.get("groups") not in valid_orders:
-        result.errors.append(f"{order_path} | field groups: expected a supported ordered prefix from materials, items, loot, consumables, creatures, weapons")
+        result.errors.append(f"{order_path} | field groups: expected a supported ordered prefix from materials, items, loot, consumables, creatures, weapons, medical")
         return result
     for name in sorted(order.keys() - {"groups"}):
         result.warnings.append(f"{order_path} | field {name}: unknown optional field")
@@ -263,6 +278,8 @@ def load_content(root: Path) -> ContentResult:
                         result.consumable_item_sources[entry["item_id"]] = source
                     elif expected_type == "weapon":
                         result.weapon_item_sources[entry["item_id"]] = source
+                    elif expected_type == "medical":
+                        result.medical_item_sources[entry["item_id"]] = source
     return result
 
 
@@ -274,7 +291,7 @@ def run_cli(command: str) -> int:
         "content_report": "Report counts only after complete content validation.",
     }[command])
     parser.add_argument("--data-root", type=Path, default=DEFAULT_DATA_ROOT,
-        help="Data root containing core/, materials/, items/, loot/ and optionally consumables/.")
+        help="Data root containing core/, materials/, items/, loot/, consumables/, creatures/, weapons/ and medical/.")
     root = parser.parse_args().data_root.resolve()
     if command == "validate_json":
         result = ContentResult()
@@ -300,13 +317,14 @@ def run_cli(command: str) -> int:
         consumables = result.definitions["consumable"]
         creatures = result.definitions["creature"]
         weapons = result.definitions["weapon"]
+        medical = result.definitions["medical"]
         loot_entries = sum(len(group["entries"]) for group in loot.values())
-        print(f"Materials: {len(materials)}\nItems: {len(items)}\nLoot Groups: {len(loot)}\nLoot Entries: {loot_entries}\nConsumables: {len(consumables)}\nCreatures: {len(creatures)}\nWeapons: {len(weapons)}")
+        print(f"Materials: {len(materials)}\nItems: {len(items)}\nLoot Groups: {len(loot)}\nLoot Entries: {loot_entries}\nConsumables: {len(consumables)}\nCreatures: {len(creatures)}\nWeapons: {len(weapons)}\nMedical: {len(medical)}")
         if command == "content_report":
             print("Item Categories:")
             for category, count in sorted(Counter(item["category"] for item in items.values()).items()):
                 print(f"{category}: {count}")
-            print(f"Total Definitions: {len(materials) + len(items) + len(loot) + len(consumables) + len(creatures) + len(weapons)}")
+            print(f"Total Definitions: {len(materials) + len(items) + len(loot) + len(consumables) + len(creatures) + len(weapons) + len(medical)}")
         else:
             print("Schema / IDs / References: 0 errors")
     print("PASS")

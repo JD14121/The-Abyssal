@@ -20,10 +20,11 @@ class DataToolTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.data = Path(self.temp.name) / "data"
         shutil.copytree(FIXTURES / "valid", self.data)
-        self.write("core/load_order.json", {"groups": ["materials", "items", "loot", "consumables", "creatures", "weapons"]})
+        self.write("core/load_order.json", {"groups": ["materials", "items", "loot", "consumables", "creatures", "weapons", "medical"]})
         self.write("consumables/consumables.json", [])
         self.write("creatures/creatures.json", [])
         self.write("weapons/weapons.json", [])
+        self.write("medical/medical.json", [])
         self.write("loot/loot.json", [{"type": "loot", "id": "loot_test", "rolls": 1,
                                       "entries": [{"item_id": "knife", "weight": 1}]}])
 
@@ -47,7 +48,7 @@ class DataToolTests(unittest.TestCase):
                 result = self.run_tool(tool)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         report = self.run_tool("content_report").stdout
-        for expected in ("Materials: 2", "Items: 2", "Loot Groups: 1", "Loot Entries: 1", "misc: 1", "weapon: 1", "Total Definitions: 5"):
+        for expected in ("Materials: 2", "Items: 2", "Loot Groups: 1", "Loot Entries: 1", "misc: 1", "weapon: 1", "Medical: 0", "Total Definitions: 5"):
             self.assertIn(expected, report)
 
     def test_weapon_schema_and_item_reference(self):
@@ -67,6 +68,27 @@ class DataToolTests(unittest.TestCase):
         self.assertNotEqual(self.run_tool("validate_references").returncode, 0)
         self.write("weapons/weapons.json", [weapon, dict(weapon, id="another_weapon")])
         self.assertNotEqual(self.run_tool("validate_references").returncode, 0)
+
+    def test_medical_profile_schema_mapping_and_report(self):
+        profile = {"type": "medical", "id": "bandage_medical", "item_id": "knife",
+                   "bleeding_reduction_per_game_hour": 0.75}
+        self.write("medical/medical.json", [profile])
+        for tool in TOOLS:
+            with self.subTest(tool=tool):
+                result = self.run_tool(tool)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        report = self.run_tool("content_report").stdout
+        self.assertIn("Medical: 1", report)
+        self.assertIn("Total Definitions: 6", report)
+        for effect in (0, -0.1, True, "fast", float("inf")):
+            self.write("medical/medical.json", [dict(profile, bleeding_reduction_per_game_hour=effect)])
+            self.assertNotEqual(self.run_tool("validate_references").returncode, 0)
+        self.write("medical/medical.json", [dict(profile, item_id="missing_item")])
+        self.assertNotEqual(self.run_tool("validate_references").returncode, 0)
+        self.write("medical/medical.json", [profile, dict(profile, id="second_bandage_profile")])
+        result = self.run_tool("validate_references")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("duplicate Medical mapping", result.stdout + result.stderr)
 
     def test_invalid_definitions_fail_with_source_and_reason(self):
         cases = json.loads((FIXTURES / "invalid_cases.json").read_text())

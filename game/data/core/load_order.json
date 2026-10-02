@@ -1,3 +1,3 @@
 {
-  "groups": ["materials", "items", "loot", "consumables", "creatures", "weapons"]
+  "groups": ["materials", "items", "loot", "consumables", "creatures", "weapons", "medical"]
 }
