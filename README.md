@@ -1,4 +1,6 @@
-# Hardcore Survival Game
+# The Abyssal
+
+A tribute to hardcore survival games.
 
 A data-driven hardcore survival game built with Godot 4.x.
 
