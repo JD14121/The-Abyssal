@@ -195,13 +195,41 @@ Phase 10 — Combat Foundation follows.
 - **Complete** — Player melee test scene and runtime regression coverage
 - Armor, wounds, infection and ranged combat remain deferred
 
-## Phase 12 - Death and Corpse Lifecycle (Recommended Next)
+## Phase 12 - Death and Corpse Lifecycle Foundation (Complete)
 
-- Define the transition after Creature health depletion
-- Stop Zombie behavior and represent a persistent in-world corpse runtime entity
-- Keep loot, wounds, infection, persistence and UI scoped to a later explicit phase
+- **Complete** — Player depletion triggers a one-time defeated state and disables movement, melee, interaction and active Container access
+- **Complete** — Player node, zero Health and exact Inventory contents are preserved; no Player Corpse or respawn behavior
+- **Complete** — Opt-in CreatureDeathComponent stops Zombie AI/collision, initializes Corpse metadata and queues removal only after successful spawn
+- **Complete** — Corpse supports placeholder inspection and remains outside Creature combat collision; it owns no Health, Inventory or Loot
+- **Complete** — repeated transitions are idempotent; missing/invalid scene, invalid parent and invalid metadata leave the zero-Health Zombie inert and present
+- Corpse Loot, Player death presentation, wounds, persistence and respawn remain deferred
 
-## Phase 13 - World
+## Phase 13 - Wound and Bleeding Foundation (Recommended Next)
+
+- Basic body regions and wound records
+- Wound events from resolved damage
+- Bounded bleeding rate and Health loss over time
+- Basic bandage treatment
+- Infection, zombification, fractures and pain remain deferred
+
+## Phase 14 - Medical and Bandage Foundation
+
+- Treatment items and wound care rules
+- Keep infection and advanced medicine deferred
+
+## Phase 15 - Infection and Disease Foundation
+
+- Explicit infection progression and disease outcomes
+
+## Phase 16 - Noise and Advanced Perception
+
+- Hearing, investigation and search behavior
+
+## Phase 17 - Zombie Spawning and Population
+
+- Controlled spawn points and population boundaries
+
+## Phase 18 - World
 
 - building templates
 - chunks
@@ -210,7 +238,7 @@ Phase 10 — Combat Foundation follows.
 
 ---
 
-## Phase 14 - Advanced Simulation
+## Phase 19 - Advanced Simulation
 
 Future systems:
 

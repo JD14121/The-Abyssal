@@ -131,6 +131,10 @@ rejects out-of-range values and leaves the current state unchanged. The clock
 and survival dictionaries are runtime record contracts only: there is still no
 file I/O, SaveManager, player persistence, or enclosing versioned save format.
 
+Phase 12 Player defeated state, Creature-to-Corpse transitions and Corpse
+instances are runtime-only. Their persistence and restoration behavior remain
+deferred; no record fields or save version are introduced for them.
+
 ## Requirements
 
 Future saves should:

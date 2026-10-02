@@ -8,6 +8,7 @@ const DamageReceiverScript = preload("res://scripts/combat/damage_receiver.gd")
 
 var equipped_instance_id := ""
 var cooldown_remaining := 0.0
+var _combat_enabled := true
 var _candidates: Array[Node2D] = []
 var _inventory_component: Node
 var _registry: Node
@@ -31,9 +32,17 @@ func _physics_process(delta: float) -> void:
 func physics_step(delta: float, attack_pressed: bool) -> bool:
 	if is_finite(delta) and delta > 0.0:
 		cooldown_remaining = maxf(cooldown_remaining - delta, 0.0)
-	if attack_pressed:
+	if attack_pressed and _combat_enabled:
 		return try_attack()
 	return false
+
+
+func set_combat_enabled(enabled: bool) -> void:
+	_combat_enabled = enabled
+
+
+func is_combat_enabled() -> bool:
+	return _combat_enabled
 
 
 func equip_melee_weapon(instance_id: String) -> bool:
@@ -59,6 +68,8 @@ func get_current_melee_damage() -> float:
 
 
 func try_attack() -> bool:
+	if not _combat_enabled:
+		return false
 	var weapon = _get_equipped_weapon()
 	if weapon == null:
 		return false

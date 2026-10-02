@@ -4,6 +4,8 @@ extends DamageReceiver
 
 const SurvivalStateScript = preload("res://scripts/survival/survival_state.gd")
 
+signal health_depleted
+
 var survival_component: Node
 
 
@@ -29,7 +31,10 @@ func can_receive_damage(event: DamageEvent) -> bool:
 func receive_damage(event: DamageEvent) -> bool:
 	if not can_receive_damage(event):
 		return false
-	return _get_state().modify_health(-event.amount)
+	var applied: bool = _get_state().modify_health(-event.amount)
+	if applied and is_depleted():
+		health_depleted.emit()
+	return applied
 
 
 func get_current_health() -> float:

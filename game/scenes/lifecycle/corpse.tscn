@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/lifecycle/corpse.gd" id="1"]
+
+[sub_resource type="CircleShape2D" id="CorpseInteractionShape"]
+radius = 18.0
+
+[node name="Corpse" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("1")
+
+[node name="PlaceholderVisual" type="Polygon2D" parent="."]
+color = Color(0.32, 0.26, 0.24, 1)
+polygon = PackedVector2Array(-18, -8, 13, -8, 20, -3, 15, 5, -15, 5, -21, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CorpseInteractionShape")

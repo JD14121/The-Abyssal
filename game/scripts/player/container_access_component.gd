@@ -33,3 +33,7 @@ func get_active_container() -> WorldContainer:
 	if _interaction_component == null or not _interaction_component.get_candidates().has(_active_container):
 		_active_container = null
 	return _active_container
+
+
+func clear_active_container() -> void:
+	_active_container = null

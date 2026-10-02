@@ -9,6 +9,7 @@ extends Area2D
 var interactor: Node2D
 var _candidates: Array[Interactable] = []
 var _current_target: Interactable
+var _interaction_enabled := true
 
 
 func _ready() -> void:
@@ -42,6 +43,8 @@ func get_candidates() -> Array[Interactable]:
 
 
 func try_interact() -> bool:
+	if not _interaction_enabled:
+		return false
 	var target := get_current_target()
 	if target == null or not target.is_inside_tree() or not target.can_interact(interactor):
 		refresh_target()
@@ -50,7 +53,22 @@ func try_interact() -> bool:
 	return true
 
 
+func set_interaction_enabled(enabled: bool) -> void:
+	_interaction_enabled = enabled
+	if not enabled:
+		_current_target = null
+	else:
+		refresh_target()
+
+
+func is_interaction_enabled() -> bool:
+	return _interaction_enabled
+
+
 func refresh_target() -> void:
+	if not _interaction_enabled:
+		_current_target = null
+		return
 	for index in range(_candidates.size() - 1, -1, -1):
 		var candidate := _candidates[index]
 		if not is_instance_valid(candidate) or not candidate.is_inside_tree():

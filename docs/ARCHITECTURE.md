@@ -23,6 +23,10 @@ that attack intent signal, without adding any Combat singleton.
 Phase 11 adds static Weapon definitions and a PlayerMeleeComponent that keeps
 an exact Inventory instance ID, tracks Creature candidates separately from
 interaction, and sends accepted attacks through the same CombatService.
+Phase 12 adds local lifecycle reactions to Health depletion. Player defeat
+shuts down Player gameplay while preserving its node and Inventory; a composed
+CreatureDeathComponent replaces a Zombie with a non-blocking Corpse only after
+the Corpse is initialized and added to the world.
 
 Gameplay Data
 -> Data Registry
@@ -46,6 +50,10 @@ Creature JSON
 -> DamageReceiver
    -> PlayerDamageReceiver -> SurvivalState.health
    -> CreatureHealthComponent -> Creature runtime health
+                         ↓ health_depleted
+                  Lifecycle Components
+                   ├─ PlayerDefeatComponent
+                   └─ CreatureDeathComponent -> Corpse
 
 ## Main Layers
 
@@ -91,8 +99,9 @@ PlayerDamageReceiver delegates to the Player's existing SurvivalState, while
 CreatureHealthComponent stores one Creature's current Health and maximum. The
 two receiver implementations share one contract and CombatService does not
 depend on entity type. Depleting a Creature stops Zombie AI and further attack
-requests but leaves the node in the scene tree. This is not a death/corpse
-system.
+requests. In Combat-only assemblies, the depleted node remains so Combat tests
+do not silently acquire lifecycle behavior. CreatureDeathComponent is added
+only by assemblies that opt into death and corpse lifecycle.
 
 AI owns Zombie attack timing and range. Combat owns resolution. DamageReceiver
 owns Health mutation. At this phase boundary there is no armor, damage types,
@@ -115,6 +124,27 @@ checked again before CombatService resolves the request. The component owns
 input and a physics-time cooldown; only a successful CombatService request
 starts it. The Player exposes equipped damage to CombatService without
 mutating health.
+
+### Death and Corpse Lifecycle (Phase 12)
+
+DamageReceiver owns Health changes and emits depletion; it does not decide what
+depletion means. PlayerDefeatComponent listens to PlayerDamageReceiver and
+performs a one-time shutdown: movement, melee, interaction and active Container
+access are disabled. The Player node, zero Health and exact Inventory contents
+remain intact.
+
+CreatureDeathComponent is a local composition on scenes that need the complete
+death flow; it is intentionally absent from the shared Zombie scene, AI-only
+yard and Combat-only test. It validates the world parent and configured scene,
+stops Zombie AI and collision, initializes Corpse metadata, adds and positions
+the Corpse, then queues the Zombie for removal. A failed transition leaves the
+zero-Health Zombie inert and present, records a diagnostic and does not retry
+automatically. Repeated depletion is idempotent.
+
+Corpse is a non-blocking Interactable on the Interactable layer. It stores only
+`source_creature_definition_id` and an inspection counter/signal for the
+placeholder action. It has no Health, DamageReceiver, Inventory, Loot or
+Creature collision layer. Player defeat does not create a Player Corpse.
 
 ### Data
 

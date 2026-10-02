@@ -4,6 +4,9 @@
 
 ### Added
 
+- PlayerDefeatComponent shuts down Player movement, melee, interaction and Container access once Health depletes while preserving the Player node and Inventory
+- Optional CreatureDeathComponent transaction replaces a depleted Zombie with a non-blocking, inspectable Corpse; failed setup leaves the Zombie inert and present
+- Corpse metadata, placeholder inspection, death/corpse debug scene, lifecycle tests and persistence deferral notes
 - WeaponDefinition JSON and atomic DataRegistry indexes, static/Python validation, and Weapon reporting
 - PlayerMeleeComponent with exact-instance equip validation, Creature-only target tracking, nearest-target selection, one-press Space input and physics-time cooldown
 - Player melee attacks through the existing CombatService, plus a two-Zombie melee debug scene and integration checks

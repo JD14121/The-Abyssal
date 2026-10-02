@@ -49,6 +49,19 @@ func set_target(new_target: Node2D) -> void:
 	target = new_target if is_instance_valid(new_target) else null
 
 
+func set_ai_enabled(enabled: bool) -> void:
+	if not enabled:
+		initialized = false
+		target = null
+		current_state = State.IDLE
+		velocity = Vector2.ZERO
+		set_physics_process(false)
+		return
+	if creature_definition != null and not get_damage_receiver().is_depleted():
+		initialized = true
+		set_physics_process(true)
+
+
 func get_state_name() -> String:
 	return ["IDLE", "CHASE", "ATTACK"][current_state]
 
@@ -145,8 +158,4 @@ func _fail_initialization(reason: String) -> bool:
 
 
 func _on_health_depleted() -> void:
-	initialized = false
-	target = null
-	current_state = State.IDLE
-	velocity = Vector2.ZERO
-	set_physics_process(false)
+	set_ai_enabled(false)

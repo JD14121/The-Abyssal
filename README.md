@@ -128,6 +128,9 @@ $godotExecutable = 'D:/Codex Projects/md and tools/Godot_v4.7.2-stable_win64_con
 & $godotExecutable --headless --path './game' res://debug/test_scenes/combat_test.tscn --quit-after 4
 & $godotExecutable --headless --path './game' --script res://tests/unit/combat/test_player_melee_foundation.gd
 & $godotExecutable --headless --path './game' res://debug/test_scenes/player_melee_test.tscn --quit-after 4
+& $godotExecutable --headless --path './game' --script res://tests/unit/lifecycle/test_lifecycle_foundation.gd
+& $godotExecutable --headless --path './game' --script res://tests/unit/lifecycle/test_lifecycle_integration.gd
+& $godotExecutable --headless --path './game' res://debug/test_scenes/death_corpse_test.tscn --quit-after 4
 ```
 
 The first command imports and checks scripts; inspect its log for parser errors
@@ -249,6 +252,16 @@ melee damage at the configured attack interval. Press **H** to apply 25 test
 damage to the Zombie. This scene explicitly connects CombatCoordinator;
 `zombie_test.tscn` remains AI-only and has no damage resolution.
 
+## Run and Check Death / Corpse Lifecycle
+
+Run `res://debug/test_scenes/death_corpse_test.tscn`. The scene equips a test
+knife and connects local Combat and CreatureDeath components. Move with WASD or
+the arrow keys, attack with **Space**, and inspect a spawned Corpse with **E**.
+The status label shows Player defeat, Zombie AI, Corpse count and source ID.
+To check Player defeat, allow the Zombie to attack; defeat disables gameplay
+controls while preserving the Player and Inventory. Corpse inspection is only
+a placeholder; there is no death screen, Loot, item drop, respawn or persistence.
+
 ## Development Rules
 
 Read `AGENTS.md` before making significant changes.
@@ -297,6 +310,15 @@ equips a knife and places two Zombies in the test yard. Health depletion still
 does not create a corpse; armor, wounds, death, UI and persistence remain future
 work.
 
+Phase 12: Death and Corpse Lifecycle Foundation (complete)
+
+Player Health depletion enters a one-time defeated state and disables movement,
+melee, interaction and active Container access while preserving the Player node
+and Inventory. Scenes that opt into CreatureDeathComponent convert depleted
+Zombies to non-blocking Corpses after successful initialization and placement;
+failed transitions leave the Zombie inert at zero Health. Corpses support only
+placeholder inspection and contain no Health, Inventory or Loot.
+
 Phase 0B adds independent item instances, UUID identities, validated condition
 changes and JSON-compatible serialization/reconstruction. Usage and record
 contracts are in [Architecture](docs/ARCHITECTURE.md) and
@@ -314,8 +336,9 @@ validated Loot groups, injected-RNG resolution into independent ItemInstances,
 and all-or-nothing capacity-aware Container population. Phase 8 adds
 ConsumableDefinition loading and atomic consumption of an exact Inventory item
 instance. Phase 9 adds a generic Creature registry and Zombie AI/navigation
-foundation. Phase 10 adds the first damage resolution pipeline and Phase 11
-adds Player melee. Map placement, UI and persistence remain deferred.
+foundation. Phase 10 adds the first damage resolution pipeline, Phase 11 adds
+Player melee, and Phase 12 adds defeat and Creature-to-Corpse lifecycle rules.
+Map placement, UI and persistence remain deferred.
 
 ## Project Status
 
@@ -324,7 +347,8 @@ interaction, Inventory and WorldItem pickup/drop foundations are implemented.
 Container access, Inventory transfers and the Loot foundation are implemented.
 The Phase 7 GameClock and Player survival foundations, Phase 8 Consumable
 Foundation, Phase 9 Creature/Zombie Foundation, Phase 10 Combat Foundation and
-Phase 11 Player Melee / Weapon Foundation are implemented. No
+Phase 11 Player Melee / Weapon Foundation and Phase 12 Death / Corpse Lifecycle
+are implemented. No
 Inventory or Container UI, map-based Loot placement or full save/load is implemented.
 Existing engine settings are preserved; the project uses DataRegistry and GameClock
 Autoloads and the Player Foundation test-world entry scene. See [Data Schema](docs/DATA_SCHEMA.md) and
@@ -337,4 +361,4 @@ The current Godot executables and VS Code shortcut live outside this repository.
 The first-stage empty directories exist locally. Git does not preserve empty
 directories; create them as needed after cloning. No placeholder files are required.
 
-Recommended next phase: Phase 12 - Death and Corpse Lifecycle.
+Recommended next phase: Phase 13 - Wound and Bleeding Foundation.

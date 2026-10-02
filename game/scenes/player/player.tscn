@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/interaction/interaction_component.gd" id="2"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/survival/survival_component.gd" id="6"]
 [ext_resource type="Script" path="res://scripts/combat/player_damage_receiver.gd" id="7"]
 [ext_resource type="Script" path="res://scripts/player/player_melee_component.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/lifecycle/player_defeat_component.gd" id="9"]
 
 [sub_resource type="RectangleShape2D" id="PlayerShape"]
 size = Vector2(32, 32)
@@ -65,3 +66,6 @@ collision_mask = 8
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerMeleeComponent/MeleeTargetArea"]
 shape = SubResource("MeleeRange")
+
+[node name="PlayerDefeatComponent" type="Node" parent="."]
+script = ExtResource("9")
