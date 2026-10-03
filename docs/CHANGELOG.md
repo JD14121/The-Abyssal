@@ -1,5 +1,16 @@
 # Changelog
 
+## World Memory Foundation integration — 2026-10-04
+
+- Integrated the Phase 13 brief against current bounded Phase 28 architecture.
+- Added immutable causal events, mutable semantic evidence graph, validated
+  media/significance JSON, logical-time lifecycle services and observer beliefs.
+- Added transactional in-memory snapshots, stable scene identity rebinding,
+  confirmed death/defeat/wound adapters and post-commit inventory drop results.
+- Added five Godot regression suites; preserved existing models, animations,
+  gameplay balance and pre-existing uncommitted interaction/presentation work.
+- See `architecture/WORLD_MEMORY_INTEGRATION.md` for acceptance and limitations.
+
 ## Unreleased
 
 ### Added
@@ -9,6 +20,12 @@
 - Wound-linked infection and injury progression, antibiotic treatment, pain/fracture status and movement penalties
 - Inventory/Container HUD, item use/drop/treatment, equipment slot references, facing melee/stagger/noise and projectile firearm combat with ammo/reload
 - Milestone B assembly and deterministic seed tests; Python validates weapon ammunition and demo layout loot references
+- Step-by-step Survival Demo field guide with action-driven progression, contextual item/interaction conditions and safe onboarding before Zombie combat
+- World left-click interaction and pickup feedback, non-focusable HUD controls, Demo-only Zombie health bars, melee hit/kill confirmation, and Zombie-to-Corpse lifecycle wiring
+- Tutorial arrow/ring overlays targeting visible controls, full-width selectable inventory rows, and a paused Player-death overlay with Retry/reload
+- Tutorial combat keeps the current Zombie inert until the melee training kill, preventing the lesson from interrupting fist attacks; building floors render below actors so the Player stays visible indoors
+- Melee tutorial hides nearby Door/Window interaction prompts while Space is the attack key, and highlights a single Zombie-facing attack instruction
+- Lethal projectile impacts now defer the Creature-to-Corpse transition until the physics callback exits, preventing collision-shape mutation during physics query flushing
 - MedicalDefinition JSON schema, Item lookup indexes and validated Bandage profile
 - TreatmentService for exact `wound_id` bleeding treatment with exact Inventory ItemInstance consumption and rollback on rejected Wound mutation
 - Medical registry/treatment tests and Python Medical validation/reporting coverage

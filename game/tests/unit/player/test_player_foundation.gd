@@ -35,6 +35,12 @@ func _run() -> void:
 	check(controller.calculate_velocity(Vector2(0.5, 0), 220.0) == Vector2(110.0, 0), "analog magnitude retained")
 	for action in ACTIONS:
 		check(InputMap.has_action(action), "Input Map includes " + String(action))
+		var accepts_any_keyboard := false
+		for event in InputMap.action_get_events(action):
+			if event is InputEventKey and event.device == -1:
+				accepts_any_keyboard = true
+				break
+		check(accepts_any_keyboard, "keyboard movement action accepts the active keyboard: " + String(action))
 	var mappings := {KEY_W: &"move_up", KEY_S: &"move_down", KEY_A: &"move_left", KEY_D: &"move_right", KEY_UP: &"move_up", KEY_DOWN: &"move_down", KEY_LEFT: &"move_left", KEY_RIGHT: &"move_right"}
 	for key in mappings:
 		_key(key, true)

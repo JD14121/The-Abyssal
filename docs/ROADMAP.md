@@ -296,6 +296,19 @@ placement, loot and Zombie spawn arrangement.
 
 ## Phase 29 - Save Foundation
 
+### World Memory workstream (bounded foundation implemented before Phase 29)
+
+- WM-0–WM-5: repository audit, immutable causal history, semantic memory graph,
+  anchors, logical-time decay, reinforcement, fragmentation, derived versions,
+  and completed gameplay outcome adapters.
+- WM-6: explicit observer knowledge records and source validation are available;
+  NPC interpretation, social propagation and narrative remain deferred.
+- Phase 29 should persist the versioned history snapshot atomically alongside
+  the save manifest. Phases 30–32 should restore matching clock and gameplay
+  identities, then bind actor/corpse and item evidence to restored scenes.
+- No existing gameplay phases are renumbered. See
+  [integration and limits](architecture/WORLD_MEMORY_INTEGRATION.md).
+
 - SaveManager, manifest/version, atomic writes and load validation
 
 ## Phase 30 - Player Save and Load

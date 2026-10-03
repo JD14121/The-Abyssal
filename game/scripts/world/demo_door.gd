@@ -10,6 +10,7 @@ var _visual: Polygon2D
 
 func _ready() -> void:
 	add_to_group("demo_doors")
+	interaction_priority = 20
 	_blocking_shape = get_node_or_null("DoorBody/CollisionShape2D") as CollisionShape2D
 	_visual = get_node_or_null("Visual") as Polygon2D
 	set_open(starts_open)

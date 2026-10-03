@@ -1,6 +1,8 @@
 extends Area2D
 ## Detects nearby Interactable targets, selects the nearest and handles requests.
 
+signal interaction_completed(target: Interactable)
+
 @export_range(1.0, 1000.0, 1.0, "or_greater") var interaction_range: float = 96.0:
 	set(value):
 		interaction_range = maxf(value, 1.0)
@@ -27,6 +29,17 @@ func _process(_delta: float) -> void:
 		try_interact()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if not event is InputEventMouseButton or event.button_index != MOUSE_BUTTON_LEFT or not event.pressed:
+		return
+	if _interaction_enabled:
+		var clicked_target := _get_clicked_candidate(get_global_mouse_position())
+		if clicked_target != null:
+			_interact_with_target(clicked_target)
+	# Consume world clicks so an embedded F5 run cannot select editor objects/scripts.
+	get_viewport().set_input_as_handled()
+
+
 func get_current_target() -> Interactable:
 	return _current_target if is_instance_valid(_current_target) else null
 
@@ -46,11 +59,36 @@ func try_interact() -> bool:
 	if not _interaction_enabled:
 		return false
 	var target := get_current_target()
-	if target == null or not target.is_inside_tree() or not target.can_interact(interactor):
+	if target == null:
+		refresh_target()
+		return false
+	return _interact_with_target(target)
+
+
+func _interact_with_target(target: Interactable) -> bool:
+	if not _interaction_enabled or not is_instance_valid(target) or not target.is_inside_tree() \
+		or not _candidates.has(target) or not target.can_interact(interactor):
 		refresh_target()
 		return false
 	target.interact(interactor)
+	interaction_completed.emit(target)
 	return true
+
+
+func _get_clicked_candidate(world_position: Vector2) -> Interactable:
+	if not is_finite(world_position.x) or not is_finite(world_position.y):
+		return null
+	var query := PhysicsPointQueryParameters2D.new()
+	query.position = world_position
+	query.collision_mask = collision_mask
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+	var hits := get_world_2d().direct_space_state.intersect_point(query, 16)
+	for hit in hits:
+		var candidate := hit.get("collider") as Interactable
+		if candidate != null and _candidates.has(candidate) and candidate.can_interact(interactor):
+			return candidate
+	return null
 
 
 func set_interaction_enabled(enabled: bool) -> void:
@@ -75,13 +113,16 @@ func refresh_target() -> void:
 			_candidates.remove_at(index)
 	var selected: Interactable
 	var nearest_distance_squared := INF
+	var selected_priority := -2147483648
 	if is_instance_valid(interactor) and interactor.is_inside_tree():
 		for candidate in _candidates:
 			if not candidate.can_interact(interactor):
 				continue
 			var distance_squared := global_position.distance_squared_to(candidate.global_position)
-			if distance_squared < nearest_distance_squared:
+			if candidate.interaction_priority > selected_priority or \
+				(candidate.interaction_priority == selected_priority and distance_squared < nearest_distance_squared):
 				nearest_distance_squared = distance_squared
+				selected_priority = candidate.interaction_priority
 				selected = candidate
 	_current_target = selected
 

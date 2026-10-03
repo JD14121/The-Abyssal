@@ -2,6 +2,8 @@ class_name Interactable
 extends Area2D
 ## Base contract for world objects that can receive interaction requests.
 
+@export var interaction_priority := 0
+
 
 func can_interact(_interactor: Node2D) -> bool:
 	return true

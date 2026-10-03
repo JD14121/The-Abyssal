@@ -46,6 +46,14 @@ func _run() -> void:
 	target.global_position = Vector2(-3000.0, 0.0)
 	controller.refresh_simulation_tiers(2.0)
 	check(controller.get_dormant_count() == 2, "moving the Player changes distance-based simulation tiers")
+	target.global_position = Vector2.ZERO
+	controller.set_tutorial_safety_enabled(true)
+	controller.set_tutorial_single_active_mode(true)
+	controller.set_tutorial_safety_enabled(false)
+	var active_tutorial_zombies: Array = controller.get_zombies().filter(func(zombie): return zombie.initialized)
+	check(active_tutorial_zombies.size() == 1, "tutorial combat activates only one Zombie at a time")
+	check(active_tutorial_zombies[0].global_position.distance_to(target.global_position) == 100.0,
+		"tutorial combat activates the nearest living Zombie")
 	controller.queue_free()
 	target.queue_free()
 	await process_frame

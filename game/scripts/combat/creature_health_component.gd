@@ -3,6 +3,7 @@ extends DamageReceiver
 ## Runtime health owned by one Creature entity.
 
 signal health_depleted
+signal health_changed(current_health: float, max_health: float, damage: float)
 
 var max_health: float = 0.0
 var current_health: float = 0.0
@@ -29,6 +30,7 @@ func receive_damage(event: DamageEvent) -> bool:
 		return false
 	var was_alive := current_health > 0.0
 	current_health = maxf(current_health - event.amount, 0.0)
+	health_changed.emit(current_health, max_health, event.amount)
 	if was_alive and current_health == 0.0:
 		health_depleted.emit()
 	return true

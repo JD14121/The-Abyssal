@@ -6,6 +6,7 @@ const InventoryScript = preload("res://scripts/inventory/inventory.gd")
 const WorldItemScript = preload("res://scripts/items/world_item.gd")
 
 signal item_picked_up(instance_id: String)
+signal item_dropped(instance_id: String, world_item: Node2D)
 
 @export var max_weight: float = 0.0
 @export var world_item_scene: PackedScene
@@ -78,6 +79,7 @@ func drop_item(instance_id: String, world_parent: Node, world_position: Vector2)
 			world_item.free()
 		return _restore_after_failed_drop(item, "WorldItem could not be added to world_parent")
 	world_item.global_position = world_position
+	item_dropped.emit(instance_id, world_item)
 	return true
 
 

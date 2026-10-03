@@ -1,8 +1,14 @@
-extends Node
+extends Node2D
 ## Selects an owned weapon instance and submits bounded melee requests to CombatService.
+
+signal attack_landed(target: Node2D)
 
 const CombatServiceScript = preload("res://scripts/combat/combat_service.gd")
 const DamageReceiverScript = preload("res://scripts/combat/damage_receiver.gd")
+
+const UNARMED_DAMAGE := 8.0
+const UNARMED_RANGE := 42.0
+const UNARMED_INTERVAL := 0.65
 
 @export var detection_area_path: NodePath = ^"MeleeTargetArea"
 @export_range(15.0, 180.0, 1.0) var attack_arc_degrees := 100.0
@@ -18,6 +24,7 @@ var _registry: Node
 var _noise_system: Node
 var _combat_service := CombatServiceScript.new()
 var _area: Area2D
+var _swing_visual: Node2D
 
 
 func _ready() -> void:
@@ -25,10 +32,14 @@ func _ready() -> void:
 	_registry = get_tree().root.get_node_or_null("DataRegistry")
 	_noise_system = get_parent().get_parent().get_node_or_null("NoiseSystem") \
 		if get_parent().get_parent() != null else null
+	_swing_visual = get_parent().get_node_or_null("MeleeSwingVisual") as Node2D
 	_area = get_node_or_null(detection_area_path) as Area2D
 	if _area != null:
 		_area.body_entered.connect(_on_body_entered)
 		_area.body_exited.connect(_on_body_exited)
+		_area.area_entered.connect(_on_area_entered)
+		_area.area_exited.connect(_on_area_exited)
+	_sync_detection_range()
 
 
 func _physics_process(delta: float) -> void:
@@ -70,30 +81,38 @@ func unequip_melee_weapon() -> void:
 
 func get_current_melee_damage() -> float:
 	var weapon = _get_equipped_weapon()
-	return weapon.melee_damage if weapon != null else 0.0
+	if weapon != null:
+		return weapon.melee_damage if weapon.kind != &"ranged" else 0.0
+	return UNARMED_DAMAGE if _hands_are_empty() else 0.0
 
 
 func try_attack() -> bool:
 	if not _combat_enabled:
 		return false
 	var weapon = _get_equipped_weapon()
-	if weapon == null:
+	var is_unarmed := weapon == null and _hands_are_empty()
+	if (weapon == null and not is_unarmed) or (weapon != null and weapon.kind == &"ranged"):
 		return false
 	if cooldown_remaining > 0.0:
 		return false
-	var target := select_target(weapon.melee_range)
+	var max_range: float = UNARMED_RANGE if is_unarmed else float(weapon.melee_range)
+	var interval: float = UNARMED_INTERVAL if is_unarmed else float(weapon.attack_interval)
+	var target := select_target(max_range)
 	if target == null:
 		return false
-	if _get_player_position().distance_to(target.global_position) > weapon.melee_range:
+	if _get_player_position().distance_to(target.global_position) > max_range:
 		return false
 	if not _combat_service.resolve_melee_attack(get_parent(), target):
 		return false
+	attack_landed.emit(target)
+	if _swing_visual != null and _swing_visual.has_method("play_attack"):
+		_swing_visual.call("play_attack", get_facing_direction(), max_range, is_unarmed)
 	var player_position := _get_player_position()
 	if target.has_method("apply_stagger"):
 		target.apply_stagger((target.global_position - player_position).normalized() * stagger_impulse, stagger_duration)
 	if is_instance_valid(_noise_system) and _noise_system.has_method("emit_noise"):
 		_noise_system.emit_noise(player_position, 220.0, &"melee_attack", get_parent())
-	cooldown_remaining = weapon.attack_interval
+	cooldown_remaining = interval
 	return true
 
 
@@ -168,7 +187,10 @@ func _is_legal_target(target: Node2D) -> bool:
 
 func _sync_detection_range() -> void:
 	var weapon = _get_equipped_weapon()
-	_set_detection_radius(weapon.melee_range if weapon != null else 0.0)
+	if weapon != null:
+		_set_detection_radius(weapon.melee_range if weapon.kind != &"ranged" else 0.0)
+	else:
+		_set_detection_radius(UNARMED_RANGE if _hands_are_empty() else 0.0)
 
 
 func _clear_equipped_selection() -> void:
@@ -191,3 +213,17 @@ func _on_body_entered(body: Node2D) -> void:
 
 func _on_body_exited(body: Node2D) -> void:
 	_candidates.erase(body)
+
+
+func _on_area_entered(area: Area2D) -> void:
+	if area.has_method("get_damage_receiver") and not _candidates.has(area):
+		_candidates.append(area)
+
+
+func _on_area_exited(area: Area2D) -> void:
+	_candidates.erase(area)
+
+
+func _hands_are_empty() -> bool:
+	var equipment = get_parent().get_node_or_null("EquipmentComponent")
+	return equipment != null and equipment.get_equipped_instance_id(&"hands").is_empty()

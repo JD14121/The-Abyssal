@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "policies": [
+    {"id":"character_death","category":"historical","memory_class":"episodic","profile_id":"corpse"},
+    {"id":"character_defeat","category":"historical","memory_class":"episodic","profile_id":"location_trace"},
+    {"id":"major_wound","category":"historical","memory_class":"trace","profile_id":"location_trace"},
+    {"id":"severe_bleeding","category":"historical","memory_class":"trace","profile_id":"location_trace"}
+  ],
+  "reinforcement_weights": {"exposure":0.0,"inspection":0.08,"recording":0.15,"corroboration":0.2,"archival":0.3,"institutionalization":0.4},
+  "significant_item_ids": ["kitchen_knife"],
+  "severe_bleeding_rate_per_game_hour": 5.0
+}

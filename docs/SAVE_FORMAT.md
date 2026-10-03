@@ -1,5 +1,30 @@
 # Save Format
 
+## World Memory Foundation snapshot (in-memory schema 1)
+
+`WorldHistoryRuntime.serialize()` returns exactly `schema_version`, `world_id`,
+`identity_counter`, `config`, `ledger`, `graph`, and `knowledge`. This is a
+versioned domain snapshot, not an enclosing save-file format or SaveManager.
+
+The ledger contains immutable structured events in acceptance order. The graph
+contains deterministically sorted claims, nodes, edges and anchors. Knowledge
+contains observer-local beliefs and source memory/claim IDs. Config preserves
+the validated media and significance rules used by the snapshot. Every layer
+rejects unsupported fields, malformed types, invalid IDs and unresolved
+references. Runtime restoration stages all layers before replacing valid state;
+the identity counter must not precede retained allocated identities.
+
+No Node, NodePath, Vector, ObjectID or runtime scene resource is serialized as
+historical identity. Existing ItemInstance UUID records remain unchanged.
+Actor/corpse IDs live in binding metadata at the scene boundary; future saves
+must persist that metadata with their own gameplay records and restore the
+clock before advancing memory. `bind_restored_identity()` reconnects known
+identities and rejects duplicate live bindings. Scene removal means unavailable
+access, whereas physical destruction is a separate explicit outcome.
+
+See [World Memory integration](architecture/WORLD_MEMORY_INTEGRATION.md) for
+schema ownership, restore boundaries and future Phase 29–32 responsibilities.
+
 ## Status
 
 The full save system has not yet been implemented. Phase 0B implements

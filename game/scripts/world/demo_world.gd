@@ -7,9 +7,13 @@ const BUILDING_SCRIPT := preload("res://scripts/world/demo_building.gd")
 const POPULATION_SCRIPT := preload("res://scripts/creatures/zombie_population_controller.gd")
 const NOISE_SCRIPT := preload("res://scripts/world/noise/noise_system.gd")
 const GRID_SCRIPT := preload("res://scripts/world/world_grid.gd")
+const GROUND_SCRIPT := preload("res://scripts/world/demo_world_ground.gd")
 const EXTRACTION_SCENE := preload("res://scenes/world/extraction.tscn")
+const CORPSE_SCENE := preload("res://scenes/lifecycle/corpse.tscn")
+const CREATURE_DEATH_SCRIPT := preload("res://scripts/lifecycle/creature_death_component.gd")
 const HUD_SCRIPT := preload("res://scripts/ui/demo_hud.gd")
 const LAYOUT_PATH := "res://data/world/demo_town.json"
+const HISTORY_ADAPTER := preload("res://scripts/history/world_history_adapter.gd")
 
 @export var world_seed := 14028
 
@@ -18,17 +22,31 @@ var noise_system: Node
 var population: Node
 var extraction: DemoExtraction
 var world_grid: WorldGrid
+var history_adapter: Node
 var _layout: Dictionary = {}
 var _victory := false
 
 
 func _ready() -> void:
+	GameClock.set_paused(false)
 	GameClock.set_time_scale(60.0)
 	if not DataRegistry.is_loaded() or not _load_layout():
 		push_error("[DemoWorld] Startup validation failed")
 		get_tree().quit(1)
 		return
 	world_grid = GRID_SCRIPT.new(32.0, 16)
+	history_adapter = HISTORY_ADAPTER.new()
+	history_adapter.name = "WorldHistoryAdapter"
+	add_child(history_adapter)
+	if not history_adapter.configure(self, GameClock, "demo_town"):
+		push_error("[DemoWorld] World history configuration failed")
+		get_tree().quit(1)
+		return
+	var ground := GROUND_SCRIPT.new() as Node2D
+	ground.name = "WorldGroundVisual"
+	ground.set("world_bounds", Vector2(float(_layout.bounds[0]), float(_layout.bounds[1])))
+	ground.z_index = -2
+	add_child(ground)
 	noise_system = Node.new()
 	noise_system.name = "NoiseSystem"
 	noise_system.set_script(NOISE_SCRIPT)
@@ -36,10 +54,24 @@ func _ready() -> void:
 	player = PLAYER_SCENE.instantiate()
 	player.name = "Player"
 	player.position = Vector2(120.0, 590.0)
+	var camera := player.get_node("Camera2D") as Camera2D
+	camera.limit_left = 0
+	camera.limit_top = 0
+	camera.limit_right = int(_layout.bounds[0])
+	camera.limit_bottom = int(_layout.bounds[1])
+	camera.limit_enabled = true
 	add_child(player)
+	var survival_state = player.get_node("SurvivalComponent").state
+	survival_state.set_hunger(42.0)
+	survival_state.set_thirst(58.0)
 	y_sort_enabled = true
 	_add_boundaries()
 	_build_city()
+	var tutorial_house := get_node_or_null("House_01") as DemoBuilding
+	if tutorial_house != null:
+		# Frame the whole house and place the Player just outside its entrance.
+		# This gives the first interaction lesson an obvious visual destination.
+		player.position = tutorial_house.position + Vector2(0.0, tutorial_house.building_size.y * 0.5 + 96.0)
 	_build_extraction()
 	_grant_starting_loadout()
 	_build_navigation()
@@ -49,36 +81,36 @@ func _ready() -> void:
 	var hud := CanvasLayer.new()
 	hud.name = "DemoHUD"
 	hud.set_script(HUD_SCRIPT)
+	hud.connect(&"tutorial_safety_released", _on_tutorial_safety_released)
 	add_child(hud)
 	await get_tree().physics_frame
 	if not population.configure(ZOMBIE_SCENE, player, noise_system, 10, 620.0, 1180.0):
 		push_error("[DemoWorld] Population configuration failed: %s" % "; ".join(population.get_errors()))
 		return
+	population.set_tutorial_single_active_mode(true)
+	population.set_tutorial_safety_enabled(true)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = world_seed
-	var spawn_positions: Array = _layout["zombie_spawn_sites"].duplicate()
+	var spawn_positions: Array = []
+	for spawn_site: Array in _layout["zombie_spawn_sites"]:
+		var spawn_position := Vector2(float(spawn_site[0]), float(spawn_site[1]))
+		if spawn_position.distance_to(player.global_position) >= 400.0:
+			spawn_positions.append(spawn_site)
+	if spawn_positions.size() < 7:
+		push_error("[DemoWorld] Need at least 7 Zombie spawn sites outside the tutorial danger radius")
+		return
 	_shuffle_with_rng(spawn_positions, rng)
 	var spawned: Array[Vector2] = []
 	for index in range(mini(7, spawn_positions.size())):
 		spawned.append(Vector2(spawn_positions[index][0], spawn_positions[index][1]))
 	population.populate(spawned)
+	for zombie: ZombieController in population.get_zombies():
+		var death_component := Node.new()
+		death_component.name = "CreatureDeathComponent"
+		death_component.set_script(CREATURE_DEATH_SCRIPT)
+		death_component.set("corpse_scene", CORPSE_SCENE)
+		zombie.add_child(death_component)
 	print("[DemoWorld] Playable town ready | seed=%d | zombies=%d" % [world_seed, population.get_population_count()])
-
-
-func _draw() -> void:
-	var bounds: Vector2 = Vector2(_layout.get("bounds", [1800, 1200])[0], _layout.get("bounds", [1800, 1200])[1])
-	draw_rect(Rect2(Vector2.ZERO, bounds), Color("343b35"))
-	# Road and lots are intentionally drawn in engine shapes so the demo has no external asset dependency.
-	draw_rect(Rect2(Vector2(0.0, 500.0), Vector2(bounds.x, 160.0)), Color("625e53"))
-	draw_rect(Rect2(Vector2(0.0, 576.0), Vector2(bounds.x, 4.0)), Color("8f896f"))
-	for x in range(32, int(bounds.x), 64):
-		draw_line(Vector2(x, 0), Vector2(x, bounds.y), Color("465047"), 1.0)
-	for y in range(32, int(bounds.y), 64):
-		draw_line(Vector2(0, y), Vector2(bounds.x, y), Color("465047"), 1.0)
-	for x in [80.0, 860.0, 1720.0]:
-		for y in [90.0, 1110.0]:
-			draw_circle(Vector2(x, y), 18.0, Color("40543c"))
-			draw_circle(Vector2(x - 3, y - 4), 12.0, Color("58734d"))
 
 
 func get_seed() -> int:
@@ -226,6 +258,11 @@ func _on_extraction_requested() -> void:
 	player.set_control_enabled(false)
 	GameClock.set_paused(true)
 	print("[DemoWorld] Extraction successful. Survival demo complete.")
+
+
+func _on_tutorial_safety_released() -> void:
+	if population != null:
+		population.set_tutorial_safety_enabled(false)
 
 
 func _layout_fail(message: String) -> bool:

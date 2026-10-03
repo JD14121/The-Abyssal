@@ -1,5 +1,18 @@
 # Architecture
 
+## World Memory Foundation at Phase 28
+
+The bounded demo now composes a world-local history adapter. Immutable canonical
+events, mutable evidence/claims, and observer-local knowledge have separate
+ownership and versioned in-memory serialization. Gameplay components retain
+their responsibilities; the adapter consumes completed results and never decides
+health, death, inventory ownership, or combat resolution. Logical-time decay is
+explicit and batched, with no node or frame callback per memory record.
+
+See [World Memory integration](architecture/WORLD_MEMORY_INTEGRATION.md) for the
+dependency diagram, current Phase 28 mapping, acceptance evidence and limits.
+Save files and full world restoration remain owned by planned Phases 29–32.
+
 ## High-Level Architecture
 
 The diagram below describes the long-term architecture. Phase 0 implements the
@@ -227,6 +240,27 @@ apply a short stagger and noise. RangedWeaponComponent consumes individual ammo
 instances when reloading and launches a collision-based CombatProjectile that
 resolves through CombatService. Ammo loaded in magazines, equipment slots and
 world state are not serialized yet.
+
+The Survival Demo HUD also provides a sequential field guide. It advances from
+actual movement, successful interactions, container access, transfers, item
+use, equipment, accepted melee hits, ranged shots, treatment and extraction.
+Descriptions call out the runtime preconditions for each action. A world-local
+population safety switch keeps Zombies inactive through the introductory
+lessons, then re-enables them for combat; skipping the guide also releases the
+safety switch. This is demo onboarding state and does not add a global tutorial
+service or persist tutorial progress.
+
+In the Survival Demo, left-clicking a nearby Interactable uses the same
+interaction contract as E; world clicks are consumed by the game viewport so
+they cannot select objects in an embedded editor run. HUD item buttons do not
+take keyboard focus, leaving Space exclusively bound to melee. DemoWorld adds
+CreatureDeathComponent to its spawned Zombies and configures the existing
+Corpse scene, while other assemblies retain their opt-in lifecycle behavior.
+CreatureHealthComponent publishes accepted health changes; each demo Zombie
+shows current/max Health above its sprite, and DemoHUD reports accepted melee
+damage or a confirmed kill. The HUD's amber tutorial pointer outlines the
+current control and draws a pulsing arrow to it. Player defeat pauses the whole
+scene and presents a Retry action that unpauses GameClock and reloads the Demo.
 
 ### Data
 

@@ -178,14 +178,29 @@ From the repository root, use the executable variable above without `--headless`
 
 ## Milestone B Survival Demo
 
-F5 now starts a bounded, seed-based top-down town. Controls:
+F5 now starts a bounded, seed-based top-down town and an event-driven field
+tutorial. The guide advances as you move, interact, transfer and use items; use
+**Skip Step** if you want to move ahead, **Skip Guide** to start the full threat
+simulation immediately, and **H** to hide or reopen the guide. Zombies remain
+inactive until the combat lesson so there is time to learn the first controls.
+
+Controls:
 
 - **WASD / arrows** move and set the facing direction.
 - **E** interacts with doors, windows, furniture, and the green extraction marker.
+- **Left-click** also interacts with a nearby highlighted world object; click a dropped item to pick it up.
 - **Space** performs a facing-based melee attack; equip the pistol from inventory, then use **R** to fire and **Q** to reload.
 - **Tab** opens Player and nearby-container inventories. Select an item to equip, use (**C**), treat (**T**), store, or drop (**G**).
+- Click a full-width pack row to select it; the selected row is marked. Click a nearby world object or press **E** to interact or pick up a dropped item.
 - Select a wound in the wound row before using a bandage or antibiotic. Bandages reduce bleeding; antibiotics reduce established infection.
+- Zombie health is shown above each Zombie. Successful melee hits report damage and remaining health; defeated Zombies leave a corpse. Player death pauses the Demo and shows **YOU ARE DEAD** with **Retry**.
 - Reach the green extraction marker and press **E** to finish the demo.
+
+The guide explains interaction range and prompts, doors/windows versus
+containers, capacity-limited transfers, item pickup/drop, food and water
+effects, valid equipment, melee facing/range, firearm ammunition/reload/noise,
+and wound-specific medical requirements. Demo needs start partially depleted so
+food and water use has a visible effect during the lesson.
 
 The demo exposes `world_seed` on `game/scripts/world/demo_world.gd`. Identical seeds reproduce building placement, furniture loot, and Zombie spawn positions. Placeholder art is drawn with original Godot shapes.
 

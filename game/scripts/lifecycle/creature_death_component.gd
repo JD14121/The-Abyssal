@@ -33,6 +33,13 @@ func handle_health_depleted() -> bool:
 	if transition_started:
 		return transition_completed
 	transition_started = true
+	if Engine.is_in_physics_frame():
+		call_deferred("_complete_death_transition")
+		return true
+	return _complete_death_transition()
+
+
+func _complete_death_transition() -> bool:
 	var creature := get_parent()
 	death_transition_started.emit()
 	if corpse_scene == null:

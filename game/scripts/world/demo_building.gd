@@ -21,6 +21,9 @@ func configure(size: Vector2, room_definitions: Array[Dictionary], seed: int) ->
 
 
 func _ready() -> void:
+	# The demo draws an open roofless floor as one canvas item. Keep that floor
+	# below actors so entering a building never hides the Player behind it.
+	z_index = -1
 	_build_wall(Vector2(0.0, -building_size.y * 0.5), Vector2(building_size.x, 12.0))
 	_build_wall(Vector2(-building_size.x * 0.5, -building_size.y * 0.30), Vector2(12.0, building_size.y * 0.40))
 	_build_wall(Vector2(-building_size.x * 0.5, building_size.y * 0.33), Vector2(12.0, building_size.y * 0.34))
@@ -33,10 +36,11 @@ func _ready() -> void:
 	_build_wall(Vector2(-door_width * 0.5 - half_side * 0.5, building_size.y * 0.5), Vector2(half_side, 12.0))
 	_build_wall(Vector2(door_width * 0.5 + half_side * 0.5, building_size.y * 0.5), Vector2(half_side, 12.0))
 	_add_door(Vector2(0.0, building_size.y * 0.5))
-	# This divider and doorway give the shell a second room without blocking navigation.
+	# Keep the divider clear of the exterior doorway so the rooms remain reachable.
 	_build_wall(Vector2(0.0, 26.5), Vector2(12.0, 23.0))
-	_build_wall(Vector2(0.0, 90.5), Vector2(12.0, 21.0))
-	_add_door(Vector2(0.0, 59.0), 42.0, true)
+	# This door is the narrow inner entry corridor; start it open so opening the
+	# exterior door creates an actually traversable entrance without extra steps.
+	_add_door(Vector2(0.0, 59.0), 42.0, true, true)
 	_add_furniture()
 	queue_redraw()
 
@@ -69,11 +73,12 @@ func _build_wall(center: Vector2, size: Vector2) -> void:
 	add_child(body)
 
 
-func _add_door(local_position: Vector2, _width := 54.0, vertical := false) -> void:
+func _add_door(local_position: Vector2, _width := 54.0, vertical := false, starts_open := false) -> void:
 	var door := DOOR_SCENE.instantiate() as DemoDoor
 	if door == null:
 		return
 	door.position = local_position
+	door.starts_open = starts_open
 	if vertical:
 		door.rotation = PI * 0.5
 	add_child(door)

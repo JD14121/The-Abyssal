@@ -23,11 +23,19 @@ medical infection, UI, world generation and persistence are later milestones.
 
 **Next:** Phase 15 — Infection and Disease Foundation.
 
+## Milestone B closeout — 2026-10-04
+
+Milestone B's bounded Phase 15–28 sandbox, interaction/tutorial refinements and
+World Memory Foundation are included in this closeout. The five new memory
+suites join 39 existing Godot suites: 44 suites / 2,655 checks. The foundation
+preserves gameplay while separating canonical history, evidence and knowledge.
+See `architecture/WORLD_MEMORY_INTEGRATION.md` for implementation and limits.
+
+This checkpoint is committed and delivered separately before Milestone C's
+disk save/load, player/world restoration and modular streaming work.
+
 ## Future Milestones
 
-- **Milestone B — Playable Survival Sandbox:** Noise and Zombie perception,
-  population, a persistent world composition, buildings and loot placement,
-  Inventory UI, and Equipment.
 - **Milestone C — Persistent Survival Game:** versioned save/load, Player and
   world state persistence, and chunk state management.
 - **Milestone D — Hardcore Survival Systems:** advanced injuries, infection,
